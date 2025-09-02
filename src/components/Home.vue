@@ -558,6 +558,41 @@ export default {
     const featuredNews = ref([
       {
         id: 1,
+        title: 'El municipio de Arauca contará con 20 nuevos Gestores de Convivencia',
+        excerpt: 'La Secretaría de Gobierno Municipal posesionó ante el alcalde Juan Qüenza y la Gestora Social Stephany Ortiz Tafur a 20 jóvenes gestores de Convivencia.',
+        image: '/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM (1).jpeg',
+        category: 'Gobierno',
+        date: new Date('2025-09-02'),
+        content: `
+          <p>La Secretaría de Gobierno Municipal posesionó ante el alcalde <strong>Juan Qüenza</strong> y la Gestora Social <strong>Stephany Ortiz Tafur</strong> a 20 jóvenes gestores de Convivencia, atendiendo a un proceso de convocatoria realizado desde esta dependencia municipal.</p>
+          
+          <p>El papel fundamental de ellos será fortalecer la convivencia y la percepción de seguridad en el municipio. Su presencia activa en parques y otros espacios públicos ayudará a prevenir situaciones relacionadas contrarias a la convivencia que se presenten en el municipio.</p>
+          
+          <p>"Se le está dando a las juventudes una oportunidad para vincularse, por esto se les han dictado algunos talleres y charlas para fortalecer las labores que realizarán en calle, esto nos va a permitir desarrollar un importante trabajo", indicó <strong>César Valderrama</strong>, secretario de gobierno municipal.</p>
+          
+          <p>Y añadió "esperaremos que las comunidades en los diferentes sectores donde empecemos a actuar con ellos, se vayan dando cuenta que los muchachos estarán plenamente identificados a través de un chaleco, una gorra, un buso y otros distintivos propios de la labor de estos gestores de convivencia."</p>
+          
+          <div class="news-gallery">
+            <div class="gallery-grid">
+              <div class="gallery-item">
+                <img src="/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM (1).jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
+                <div class="gallery-badge">Principal</div>
+                <div class="gallery-caption">Posesión de Gestores de Convivencia</div>
+              </div>
+              <div class="gallery-item">
+                <img src="/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM.jpeg" alt="Jóvenes gestores de convivencia" class="gallery-image">
+                <div class="gallery-badge">Equipo</div>
+                <div class="gallery-caption">Jóvenes gestores de convivencia</div>
+              </div>
+            </div>
+          </div>
+          
+          <p>Los gestores de convivencia tendrán una contraprestación por las tareas que desarrollen, a través del operador y el proceso realizado a través de la Secretaría de Gobierno; ellos para atender las diferentes situaciones que se presente entorno al mejoramiento de la convivencia y seguridad ciudadana.</p>
+        `,
+        video: null
+      },
+      {
+        id: 2,
         title: 'EN LIBERTAD MUJERES Y MENOR SECUESTRADOS EN TAME',
         excerpt: 'En una misión humanitaria integrada por la Iglesia Católica y la Defensoría del Pueblo, el ELN entregó a tres personas secuestradas en Tame, Arauca.',
         image: '/assets/images/news/liberacion-tame-eln.jpg',
@@ -582,7 +617,7 @@ export default {
         video: null
       },
       {
-        id: 2,
+        id: 3,
         title: 'Avanza el proyecto del multicampus universitario en Saravena',
         excerpt: 'El gobernador Renson Martínez Prada lideró una mesa de trabajo para hacer seguimiento a los estudios y diseños del multicampus universitario en Saravena.',
         image: '/assets/images/news/multicampus-saravena-principal.jpg',
@@ -621,52 +656,6 @@ export default {
           </div>
           
           <p>Con este ejercicio de control y acompañamiento, el <strong>Gobierno Departamental</strong> reafirma su compromiso con la educación superior, una de las grandes apuestas del <strong>Plan de Desarrollo 2024-2027</strong>, orientada a abrir más y mejores oportunidades de acceso para los jóvenes de todo el departamento.</p>
-        `,
-        video: null
-      },
-      {
-        id: 3,
-        title: 'Estos son los semilleros de artistas araucanos',
-        excerpt: 'Con gran éxito avanza el programa de formación cultural para niños, niñas, adolescentes y jóvenes en Arauca, una iniciativa del plan Arauca Mejor.',
-        image: '/assets/images/news/semilleros-artistas-principal.jpg',
-        category: 'Cultura',
-        date: new Date('2025-09-02'),
-        content: `
-          <p>Con gran éxito avanza el <strong>programa de formación cultural</strong> para niños, niñas, adolescentes y jóvenes en Arauca, una iniciativa que hace parte del <strong>plan Arauca Mejor</strong>, liderado por el gobernador <strong>Renson Martínez</strong> y ejecutado en instituciones educativas desde mayo.</p>
-          
-          <p>La asesora de Cultura, <strong>Adriana Soto</strong>, supervisó el desarrollo del programa en los siete municipios del departamento, donde se ofrecen espacios de formación en:</p>
-          
-          <ul>
-            <li><strong>Danza nacional y joropo</strong></li>
-            <li><strong>Técnica vocal</strong></li>
-            <li><strong>Ejecución de instrumentos típicos</strong> como arpa, cuatro, bandola, maracas y bajo</li>
-          </ul>
-          
-          <p>El proceso contempla <strong>siete meses de formación continua</strong>, permitiendo que los participantes fortalezcan sus talentos y habilidades en el campo cultural.</p>
-          
-          <div class="news-gallery">
-            <div class="gallery-grid">
-              <div class="gallery-item">
-                <img src="/assets/images/news/semilleros-artistas-principal.jpg" alt="Semilleros de artistas araucanos en formación" class="gallery-image">
-                <div class="gallery-badge">Formación</div>
-                <div class="gallery-caption">Semilleros de artistas araucanos en formación</div>
-              </div>
-              <div class="gallery-item">
-                <img src="/assets/images/news/semilleros-artistas-2.jpg" alt="Niños y jóvenes en práctica cultural" class="gallery-image">
-                <div class="gallery-badge">Práctica</div>
-                <div class="gallery-caption">Niños y jóvenes en práctica cultural</div>
-              </div>
-            </div>
-          </div>
-          
-          <p><strong>Durante la supervisión, la asesora resaltó tres logros principales:</strong></p>
-          <ol>
-            <li>El <strong>avance de los niños, niñas y jóvenes</strong> en su proceso artístico.</li>
-            <li>El <strong>fortalecimiento de los semilleros culturales</strong>, garantizando la continuidad y el relevo generacional en las tradiciones.</li>
-            <li>El <strong>acompañamiento de las familias</strong>, que han participado activamente y evidencian el impacto positivo en la vida de sus hijos y la comunidad educativa.</li>
-          </ol>
-          
-          <p>Este espacio de integración entre docentes, instructores, familias y la administración departamental refleja un <strong>compromiso claro con la preservación del patrimonio cultural</strong> y la construcción de nuevas oportunidades de desarrollo a través del arte.</p>
         `,
         video: null
       }
@@ -675,6 +664,41 @@ export default {
     const highlightedNews = ref([
       {
         id: 10,
+        title: 'El municipio de Arauca contará con 20 nuevos Gestores de Convivencia',
+        excerpt: 'La Secretaría de Gobierno Municipal posesionó ante el alcalde Juan Qüenza y la Gestora Social Stephany Ortiz Tafur a 20 jóvenes gestores de Convivencia.',
+        image: '/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM (1).jpeg',
+        category: 'Gobierno',
+        date: new Date('2025-09-02'),
+        content: `
+          <p>La Secretaría de Gobierno Municipal posesionó ante el alcalde <strong>Juan Qüenza</strong> y la Gestora Social <strong>Stephany Ortiz Tafur</strong> a 20 jóvenes gestores de Convivencia, atendiendo a un proceso de convocatoria realizado desde esta dependencia municipal.</p>
+          
+          <p>El papel fundamental de ellos será fortalecer la convivencia y la percepción de seguridad en el municipio. Su presencia activa en parques y otros espacios públicos ayudará a prevenir situaciones relacionadas contrarias a la convivencia que se presenten en el municipio.</p>
+          
+          <p>"Se le está dando a las juventudes una oportunidad para vincularse, por esto se les han dictado algunos talleres y charlas para fortalecer las labores que realizarán en calle, esto nos va a permitir desarrollar un importante trabajo", indicó <strong>César Valderrama</strong>, secretario de gobierno municipal.</p>
+          
+          <p>Y añadió "esperaremos que las comunidades en los diferentes sectores donde empecemos a actuar con ellos, se vayan dando cuenta que los muchachos estarán plenamente identificados a través de un chaleco, una gorra, un buso y otros distintivos propios de la labor de estos gestores de convivencia."</p>
+          
+          <div class="news-gallery">
+            <div class="gallery-grid">
+              <div class="gallery-item">
+                <img src="/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM (1).jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
+                <div class="gallery-badge">Principal</div>
+                <div class="gallery-caption">Posesión de Gestores de Convivencia</div>
+              </div>
+              <div class="gallery-item">
+                <img src="/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM.jpeg" alt="Jóvenes gestores de convivencia" class="gallery-image">
+                <div class="gallery-badge">Equipo</div>
+                <div class="gallery-caption">Jóvenes gestores de convivencia</div>
+              </div>
+            </div>
+          </div>
+          
+          <p>Los gestores de convivencia tendrán una contraprestación por las tareas que desarrollen, a través del operador y el proceso realizado a través de la Secretaría de Gobierno; ellos para atender las diferentes situaciones que se presente entorno al mejoramiento de la convivencia y seguridad ciudadana.</p>
+        `,
+        video: null
+      },
+      {
+        id: 11,
         title: 'EN LIBERTAD MUJERES Y MENOR SECUESTRADOS EN TAME',
         excerpt: 'En una misión humanitaria integrada por la Iglesia Católica y la Defensoría del Pueblo, el ELN entregó a tres personas secuestradas en Tame, Arauca.',
         image: '/assets/images/news/liberacion-tame-eln.jpg',
@@ -699,7 +723,7 @@ export default {
         video: null
       },
       {
-        id: 11,
+        id: 12,
         title: 'Avanza el proyecto del multicampus universitario en Saravena',
         excerpt: 'El gobernador Renson Martínez Prada lideró una mesa de trabajo para hacer seguimiento a los estudios y diseños del multicampus universitario en Saravena.',
         image: '/assets/images/news/multicampus-saravena-principal.jpg',
@@ -738,52 +762,6 @@ export default {
           </div>
           
           <p>Con este ejercicio de control y acompañamiento, el <strong>Gobierno Departamental</strong> reafirma su compromiso con la educación superior, una de las grandes apuestas del <strong>Plan de Desarrollo 2024-2027</strong>, orientada a abrir más y mejores oportunidades de acceso para los jóvenes de todo el departamento.</p>
-        `,
-        video: null
-      },
-      {
-        id: 12,
-        title: 'Estos son los semilleros de artistas araucanos',
-        excerpt: 'Con gran éxito avanza el programa de formación cultural para niños, niñas, adolescentes y jóvenes en Arauca, una iniciativa del plan Arauca Mejor.',
-        image: '/assets/images/news/semilleros-artistas-principal.jpg',
-        category: 'Cultura',
-        date: new Date('2025-09-02'),
-        content: `
-          <p>Con gran éxito avanza el <strong>programa de formación cultural</strong> para niños, niñas, adolescentes y jóvenes en Arauca, una iniciativa que hace parte del <strong>plan Arauca Mejor</strong>, liderado por el gobernador <strong>Renson Martínez</strong> y ejecutado en instituciones educativas desde mayo.</p>
-          
-          <p>La asesora de Cultura, <strong>Adriana Soto</strong>, supervisó el desarrollo del programa en los siete municipios del departamento, donde se ofrecen espacios de formación en:</p>
-          
-          <ul>
-            <li><strong>Danza nacional y joropo</strong></li>
-            <li><strong>Técnica vocal</strong></li>
-            <li><strong>Ejecución de instrumentos típicos</strong> como arpa, cuatro, bandola, maracas y bajo</li>
-          </ul>
-          
-          <p>El proceso contempla <strong>siete meses de formación continua</strong>, permitiendo que los participantes fortalezcan sus talentos y habilidades en el campo cultural.</p>
-          
-          <div class="news-gallery">
-            <div class="gallery-grid">
-              <div class="gallery-item">
-                <img src="/assets/images/news/semilleros-artistas-principal.jpg" alt="Semilleros de artistas araucanos en formación" class="gallery-image">
-                <div class="gallery-badge">Formación</div>
-                <div class="gallery-caption">Semilleros de artistas araucanos en formación</div>
-              </div>
-              <div class="gallery-item">
-                <img src="/assets/images/news/semilleros-artistas-2.jpg" alt="Niños y jóvenes en práctica cultural" class="gallery-image">
-                <div class="gallery-badge">Práctica</div>
-                <div class="gallery-caption">Niños y jóvenes en práctica cultural</div>
-              </div>
-            </div>
-          </div>
-          
-          <p><strong>Durante la supervisión, la asesora resaltó tres logros principales:</strong></p>
-          <ol>
-            <li>El <strong>avance de los niños, niñas y jóvenes</strong> en su proceso artístico.</li>
-            <li>El <strong>fortalecimiento de los semilleros culturales</strong>, garantizando la continuidad y el relevo generacional en las tradiciones.</li>
-            <li>El <strong>acompañamiento de las familias</strong>, que han participado activamente y evidencian el impacto positivo en la vida de sus hijos y la comunidad educativa.</li>
-          </ol>
-          
-          <p>Este espacio de integración entre docentes, instructores, familias y la administración departamental refleja un <strong>compromiso claro con la preservación del patrimonio cultural</strong> y la construcción de nuevas oportunidades de desarrollo a través del arte.</p>
         `,
         video: null
       }
