@@ -7,6 +7,15 @@ export default defineConfig({
     port: 3000,
     host: true
   },
+  preview: {
+    host: '0.0.0.0',
+    port: process.env.PORT || 4173,
+    allowedHosts: [
+      'healthcheck.railway.app',
+      'localhost',
+      '.railway.app'
+    ]
+  },
   build: {
     outDir: 'dist',
     minify: 'terser',
