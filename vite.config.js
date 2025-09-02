@@ -22,14 +22,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    minify: 'terser',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router']
-        }
-      }
-    }
+    minify: 'terser'
   },
   optimizeDeps: {
     include: ['vue', 'vue-router']
