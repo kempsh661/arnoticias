@@ -560,7 +560,7 @@ export default {
         id: 1,
         title: 'El municipio de Arauca contará con 20 nuevos Gestores de Convivencia',
         excerpt: 'La Secretaría de Gobierno Municipal posesionó ante el alcalde Juan Qüenza y la Gestora Social Stephany Ortiz Tafur a 20 jóvenes gestores de Convivencia.',
-        image: '/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM (1).jpeg',
+        image: '/assets/images/news/gestores-convivencia-principal.jpeg',
         category: 'Gobierno',
         date: new Date('2025-09-02'),
         content: `
@@ -575,12 +575,12 @@ export default {
           <div class="news-gallery">
             <div class="gallery-grid">
               <div class="gallery-item">
-                <img src="/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM (1).jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
+                <img src="/assets/images/news/gestores-convivencia-principal.jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
                 <div class="gallery-badge">Principal</div>
                 <div class="gallery-caption">Posesión de Gestores de Convivencia</div>
               </div>
               <div class="gallery-item">
-                <img src="/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM.jpeg" alt="Jóvenes gestores de convivencia" class="gallery-image">
+                <img src="/assets/images/news/gestores-convivencia-2.jpeg" alt="Jóvenes gestores de convivencia" class="gallery-image">
                 <div class="gallery-badge">Equipo</div>
                 <div class="gallery-caption">Jóvenes gestores de convivencia</div>
               </div>
@@ -595,7 +595,7 @@ export default {
         id: 2,
         title: 'Subsidio Familiar de Vivienda en Arrendamiento para Población Migrante',
         excerpt: 'La Administración Municipal informa que el Ministerio de Vivienda clasificó como Habilitadas a las personas postuladas al Subsidio Familiar de Vivienda en modalidad de Arrendamiento.',
-        image: '/assets/images/news/inclusion social.jpeg',
+        image: '/assets/images/news/inclusion-social.jpeg',
         category: 'Vivienda',
         date: new Date('2025-09-02'),
         content: `
@@ -621,7 +621,7 @@ export default {
         id: 3,
         title: 'Más colegios de Arauca, a tono con la cultura tributaria',
         excerpt: 'La charla de sensibilización por parte de los programas de la Secretaría de Hacienda recibieron estudiantes del ciclo VI de la Institución Educativa Francisco José de Caldas.',
-        image: '/assets/images/news/Colegios principal.jpeg',
+        image: '/assets/images/news/colegios-principal.jpeg',
         category: 'Educación',
         date: new Date('2025-09-02'),
         content: `
@@ -632,7 +632,7 @@ export default {
           <div class="news-gallery">
             <div class="gallery-grid">
               <div class="gallery-item">
-                <img src="/assets/images/news/Colegios principal.jpeg" alt="Charla de cultura tributaria en colegios" class="gallery-image">
+                <img src="/assets/images/news/colegios-principal.jpeg" alt="Charla de cultura tributaria en colegios" class="gallery-image">
                 <div class="gallery-badge">Principal</div>
                 <div class="gallery-caption">Charla de cultura tributaria en colegios</div>
               </div>
@@ -665,7 +665,7 @@ export default {
         id: 4,
         title: 'Vigilancia y control del Programa de Alimentación Escolar PAE',
         excerpt: 'La Procuraduría General de la Nación adelantó una visita de vigilancia y control en la Institución Educativa General Santander para garantizar la calidad del PAE.',
-        image: '/assets/images/news/Pae principal.jpeg',
+        image: '/assets/images/news/pae-principal.jpeg',
         category: 'Educación',
         date: new Date('2025-09-02'),
         content: `
@@ -676,7 +676,7 @@ export default {
           <div class="news-gallery">
             <div class="gallery-grid">
               <div class="gallery-item">
-                <img src="/assets/images/news/Pae principal.jpeg" alt="Vigilancia del Programa de Alimentación Escolar" class="gallery-image">
+                <img src="/assets/images/news/pae-principal.jpeg" alt="Vigilancia del Programa de Alimentación Escolar" class="gallery-image">
                 <div class="gallery-badge">Principal</div>
                 <div class="gallery-caption">Vigilancia del Programa de Alimentación Escolar</div>
               </div>
@@ -717,7 +717,7 @@ export default {
         id: 5,
         title: 'Lanzamiento del Circuito de la Llanura 2025',
         excerpt: 'Gracias a PIEDEMONT SAS como patrocinador oficial, se lanza el Circuito de la Llanura 2025, una experiencia de sano esparcimiento que impulsa el deporte, turismo y cultura.',
-        image: '/assets/images/news/Lanzamiento principal.jpeg',
+        image: '/assets/images/news/lanzamiento-principal.jpeg',
         category: 'Deportes',
         date: new Date('2025-09-02'),
         content: `
@@ -730,7 +730,7 @@ export default {
           <div class="news-gallery">
             <div class="gallery-grid">
               <div class="gallery-item">
-                <img src="/assets/images/news/Lanzamiento principal.jpeg" alt="Lanzamiento del Circuito de la Llanura 2025" class="gallery-image">
+                <img src="/assets/images/news/lanzamiento-principal.jpeg" alt="Lanzamiento del Circuito de la Llanura 2025" class="gallery-image">
                 <div class="gallery-badge">Principal</div>
                 <div class="gallery-caption">Lanzamiento del Circuito de la Llanura 2025</div>
               </div>
@@ -829,7 +829,7 @@ export default {
         id: 10,
         title: 'El municipio de Arauca contará con 20 nuevos Gestores de Convivencia',
         excerpt: 'La Secretaría de Gobierno Municipal posesionó ante el alcalde Juan Qüenza y la Gestora Social Stephany Ortiz Tafur a 20 jóvenes gestores de Convivencia.',
-        image: '/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM (1).jpeg',
+        image: '/assets/images/news/gestores-convivencia-principal.jpeg',
         category: 'Gobierno',
         date: new Date('2025-09-02'),
         content: `
@@ -844,12 +844,12 @@ export default {
           <div class="news-gallery">
             <div class="gallery-grid">
               <div class="gallery-item">
-                <img src="/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM (1).jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
+                <img src="/assets/images/news/gestores-convivencia-principal.jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
                 <div class="gallery-badge">Principal</div>
                 <div class="gallery-caption">Posesión de Gestores de Convivencia</div>
               </div>
               <div class="gallery-item">
-                <img src="/assets/images/news/WhatsApp Image 2025-09-02 at 5.13.45 PM.jpeg" alt="Jóvenes gestores de convivencia" class="gallery-image">
+                <img src="/assets/images/news/gestores-convivencia-2.jpeg" alt="Jóvenes gestores de convivencia" class="gallery-image">
                 <div class="gallery-badge">Equipo</div>
                 <div class="gallery-caption">Jóvenes gestores de convivencia</div>
               </div>
@@ -864,7 +864,7 @@ export default {
         id: 11,
         title: 'Subsidio Familiar de Vivienda en Arrendamiento para Población Migrante',
         excerpt: 'La Administración Municipal informa que el Ministerio de Vivienda clasificó como Habilitadas a las personas postuladas al Subsidio Familiar de Vivienda en modalidad de Arrendamiento.',
-        image: '/assets/images/news/inclusion social.jpeg',
+        image: '/assets/images/news/inclusion-social.jpeg',
         category: 'Vivienda',
         date: new Date('2025-09-02'),
         content: `
@@ -890,7 +890,7 @@ export default {
         id: 12,
         title: 'Más colegios de Arauca, a tono con la cultura tributaria',
         excerpt: 'La charla de sensibilización por parte de los programas de la Secretaría de Hacienda recibieron estudiantes del ciclo VI de la Institución Educativa Francisco José de Caldas.',
-        image: '/assets/images/news/Colegios principal.jpeg',
+        image: '/assets/images/news/colegios-principal.jpeg',
         category: 'Educación',
         date: new Date('2025-09-02'),
         content: `
@@ -901,7 +901,7 @@ export default {
           <div class="news-gallery">
             <div class="gallery-grid">
               <div class="gallery-item">
-                <img src="/assets/images/news/Colegios principal.jpeg" alt="Charla de cultura tributaria en colegios" class="gallery-image">
+                <img src="/assets/images/news/colegios-principal.jpeg" alt="Charla de cultura tributaria en colegios" class="gallery-image">
                 <div class="gallery-badge">Principal</div>
                 <div class="gallery-caption">Charla de cultura tributaria en colegios</div>
               </div>
