@@ -14,7 +14,11 @@ export default defineConfig({
       'healthcheck.railway.app',
       'localhost',
       '.railway.app'
-    ]
+    ],
+    cors: true,
+    headers: {
+      'Cache-Control': 'public, max-age=31536000'
+    }
   },
   build: {
     outDir: 'dist',
