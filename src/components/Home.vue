@@ -560,7 +560,7 @@ export default {
         id: 1,
         title: 'El municipio de Arauca contará con 20 nuevos Gestores de Convivencia',
         excerpt: 'La Secretaría de Gobierno Municipal posesionó ante el alcalde Juan Qüenza y la Gestora Social Stephany Ortiz Tafur a 20 jóvenes gestores de Convivencia.',
-        image: '/assets/images/news/gestores-convivencia-principal.jpeg',
+        image: '/assets/images/news/gestores-convivencia-main.jpeg',
         category: 'Gobierno',
         date: new Date('2025-09-02'),
         content: `
@@ -575,7 +575,7 @@ export default {
           <div class="news-gallery">
             <div class="gallery-grid">
               <div class="gallery-item">
-                <img src="/assets/images/news/gestores-convivencia-principal.jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
+                <img src="/assets/images/news/gestores-convivencia-main.jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
                 <div class="gallery-badge">Principal</div>
                 <div class="gallery-caption">Posesión de Gestores de Convivencia</div>
               </div>
@@ -829,7 +829,7 @@ export default {
         id: 10,
         title: 'El municipio de Arauca contará con 20 nuevos Gestores de Convivencia',
         excerpt: 'La Secretaría de Gobierno Municipal posesionó ante el alcalde Juan Qüenza y la Gestora Social Stephany Ortiz Tafur a 20 jóvenes gestores de Convivencia.',
-        image: '/assets/images/news/gestores-convivencia-principal.jpeg',
+        image: '/assets/images/news/gestores-convivencia-main.jpeg',
         category: 'Gobierno',
         date: new Date('2025-09-02'),
         content: `
@@ -844,7 +844,7 @@ export default {
           <div class="news-gallery">
             <div class="gallery-grid">
               <div class="gallery-item">
-                <img src="/assets/images/news/gestores-convivencia-principal.jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
+                <img src="/assets/images/news/gestores-convivencia-main.jpeg" alt="Posesión de Gestores de Convivencia" class="gallery-image">
                 <div class="gallery-badge">Principal</div>
                 <div class="gallery-caption">Posesión de Gestores de Convivencia</div>
               </div>
