@@ -1,5 +1,39 @@
 // Datos centralizados de todas las noticias
 export const allNewsData = [
+  // Noticia más reciente
+  {
+    id: 107,
+    title: 'Alteración del orden público en Saravena deja dos uniformados de la Sijín muertos',
+    excerpt: 'En las últimas horas se registró una fuerte balacera en el centro del municipio de Saravena, que dejó como saldo la muerte de dos uniformados adscritos a la Sijín de la Policía Nacional.',
+    image: '/assets/images/news/alteracion-principal.jpeg',
+    category: 'Seguridad',
+    date: new Date('2025-09-02'),
+    content: `
+      <p>En las últimas horas se registró una <strong>fuerte balacera en el centro del municipio de Saravena</strong>, que dejó como saldo la muerte de dos uniformados adscritos a la Sijín de la Policía Nacional.</p>
+      
+      <p>De acuerdo con las primeras informaciones, los hechos se presentaron cerca del <strong>ingreso al anillo de seguridad de la Estación de Policía</strong> de esa localidad.</p>
+      
+      <p>Testigos aseguran que las víctimas quedaron tendidas a pocos metros de la entrada a la estación. Hasta el momento, <strong>no se ha revelado la identidad de los uniformados fallecidos</strong>, mientras las autoridades adelantan las investigaciones correspondientes.</p>
+      
+      <p>Las autoridades han iniciado las investigaciones para determinar las circunstancias exactas del hecho y dar con los responsables de este lamentable suceso que enluta a la institución policial.</p>
+      
+      <div class="news-gallery">
+        <div class="gallery-grid">
+          <div class="gallery-item">
+            <img src="/assets/images/news/alteracion-principal.jpeg" alt="Alteración del orden público en Saravena" class="gallery-image">
+            <div class="gallery-badge">Principal</div>
+            <div class="gallery-caption">Alteración del orden público en Saravena</div>
+          </div>
+          <div class="gallery-item">
+            <img src="/assets/images/news/alteracion.jpeg" alt="Estación de Policía de Saravena" class="gallery-image">
+            <div class="gallery-badge">Lugar</div>
+            <div class="gallery-caption">Estación de Policía de Saravena</div>
+          </div>
+        </div>
+      </div>
+    `,
+    video: null
+  },
   // Nuevas noticias
   {
     id: 100,
