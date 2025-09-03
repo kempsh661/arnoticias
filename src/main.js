@@ -2,10 +2,12 @@ import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import Home from './components/Home.vue'
+import NewsList from './components/NewsList.vue'
 import './assets/styles.css'
 
 const routes = [
   { path: '/', component: Home, name: 'home' },
+  { path: '/noticias', component: NewsList, name: 'news-list' },
   { path: '/noticia/:id', component: () => import('./components/NewsDetail.vue'), name: 'news-detail' }
 ]
 
