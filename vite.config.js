@@ -13,7 +13,9 @@ export default defineConfig({
     allowedHosts: [
       'healthcheck.railway.app',
       'localhost',
-      '.railway.app'
+      '.railway.app',
+      'araucanoticias.com.co',
+      'www.araucanoticias.com.co'
     ],
     cors: true,
     headers: {
