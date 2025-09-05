@@ -141,6 +141,7 @@
 <script>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { allNewsData } from '../data/newsData.js'
 
 export default {
   name: 'NewsDetail',
@@ -148,64 +149,10 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const news = ref(null)
-    const allNews = ref([])
+    const allNews = ref(allNewsData)
 
-    // Sample news data - En una aplicación real esto vendría de una API
-    const newsData = [
-      {
-        id: 1,
-        title: 'Importantes desarrollos económicos en la región',
-        excerpt: 'Nuevas medidas económicas prometen impulsar el crecimiento local en los próximos meses.',
-        image: '/assets/images/news/noticia-1-economia.jpg',
-        imageCaption: 'Reunión de empresarios locales discutiendo las nuevas medidas económicas.',
-        category: 'Economía',
-        date: new Date('2024-01-15'),
-        author: 'María González',
-        tags: ['economía', 'desarrollo', 'negocios', 'crecimiento'],
-        content: `
-          <p>Las nuevas medidas económicas implementadas por las autoridades locales han generado expectativas positivas entre los empresarios de la región. Según el análisis de expertos, estas iniciativas podrían impulsar significativamente el crecimiento económico local en los próximos trimestres.</p>
-          
-          <p>Entre las medidas más destacadas se encuentran:</p>
-          <ul>
-            <li>Reducción de tasas impositivas para pequeñas y medianas empresas</li>
-            <li>Programas de financiamiento con tasas preferenciales</li>
-            <li>Simplificación de trámites burocráticos</li>
-            <li>Incentivos para la inversión en tecnología</li>
-          </ul>
-          
-          <p>El economista local Dr. Carlos Ramírez expresó su optimismo sobre estas medidas: "Representan un paso importante hacia la modernización de nuestro sistema económico local. Esperamos ver resultados tangibles en el empleo y la inversión durante los próximos seis meses."</p>
-          
-          <p>Las empresas locales ya han comenzado a mostrar interés en estos programas, con más de 200 solicitudes presentadas en la primera semana desde el anuncio oficial.</p>
-        `,
-        video: null
-      },
-      {
-        id: 2,
-        title: 'Avances significativos en infraestructura local',
-        excerpt: 'Se inauguran nuevos proyectos de infraestructura que beneficiarán a miles de familias.',
-        image: '/assets/images/news/noticia-2-infraestructura.jpg',
-        imageCaption: 'Vista aérea de los nuevos proyectos de infraestructura en construcción.',
-        category: 'Infraestructura',
-        date: new Date('2024-01-14'),
-        author: 'Pedro Silva',
-        tags: ['infraestructura', 'desarrollo urbano', 'construcción'],
-        content: `
-          <p>Los proyectos de infraestructura recientemente inaugurados representan una inversión significativa que beneficiará directamente a más de 15,000 familias de la región. Estas obras incluyen mejoras en el sistema vial, ampliación de servicios públicos y modernización de espacios comunitarios.</p>
-          
-          <p>Los proyectos completados incluyen:</p>
-          <ul>
-            <li>Construcción de 5 kilómetros de nuevas vías</li>
-            <li>Ampliación del sistema de alcantarillado</li>
-            <li>Renovación de tres parques comunitarios</li>
-            <li>Instalación de nueva iluminación LED</li>
-          </ul>
-          
-          <p>La alcaldesa Ana Martínez destacó durante la ceremonia de inauguración: "Estos proyectos no solo mejoran la calidad de vida de nuestros ciudadanos, sino que también sientan las bases para un desarrollo sostenible a largo plazo."</p>
-        `,
-        video: '/assets/videos/video-noticia-2-infraestructura.mp4'
-      }
-      // Más noticias...
-    ]
+    // Usar los datos reales de newsData.js
+    const newsData = allNewsData
 
     const relatedNews = computed(() => {
       if (!news.value) return []
@@ -220,20 +167,14 @@ export default {
       const foundNews = newsData.find(item => item.id === newsId)
       
       if (foundNews) {
-        news.value = foundNews
-        allNews.value = newsData
-        
-        // Update page title for SEO
-        document.title = `${foundNews.title} - Aruca Noticias`
-        
-        // Update meta description
-        const metaDescription = document.querySelector('meta[name="description"]')
-        if (metaDescription) {
-          metaDescription.setAttribute('content', foundNews.excerpt)
-        }
+        // Redirigir a la página principal con parámetro para abrir modal
+        router.replace({
+          path: '/',
+          query: { news: newsId }
+        })
       } else {
         // Noticia no encontrada, redirigir al inicio
-        router.push('/')
+        router.replace('/')
       }
     }
 

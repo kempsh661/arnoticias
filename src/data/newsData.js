@@ -7,7 +7,7 @@ export const allNewsData = [
     excerpt: 'En las últimas horas se registró una fuerte balacera en el centro del municipio de Saravena, que dejó como saldo la muerte de dos uniformados adscritos a la Sijín de la Policía Nacional.',
     image: '/assets/images/news/alteracion-principal.jpeg',
     category: 'Seguridad',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-03T14:30:00'),
     content: `
       <p>En las últimas horas se registró una <strong>fuerte balacera en el centro del municipio de Saravena</strong>, que dejó como saldo la muerte de dos uniformados adscritos a la Sijín de la Policía Nacional.</p>
       
@@ -41,7 +41,7 @@ export const allNewsData = [
     excerpt: 'Con el objetivo de fortalecer la unidad, la comunicación y la reconciliación en los hogares, el ICBF realizó el segundo Encuentro Comunitario de Aprendizaje.',
     image: '/assets/images/news/icbf-principal.jpeg',
     category: 'Bienestar Social',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-03T10:15:00'),
     content: `
       <p>Con el objetivo de fortalecer la unidad, la comunicación y la reconciliación en los hogares, el <strong>Instituto Colombiano de Bienestar Familiar (ICBF)</strong>, a través del Centro Zonal Tame, realizó el segundo Encuentro Comunitario de Aprendizaje en el municipio de Arauca.</p>
       
@@ -74,7 +74,7 @@ export const allNewsData = [
     excerpt: 'En la sesión del 02 de septiembre se aprobaron dos importantes Proyectos de Acto Legislativo: Mesada catorce para docentes y reforma a debates legislativos.',
     image: '/assets/images/news/comision-principal.jpeg',
     category: 'Política',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-03T10:15:00'),
     content: `
       <p>En la sesión del 02 de septiembre se aprobaron dos importantes <strong>Proyectos de Acto Legislativo</strong>:</p>
       
@@ -107,7 +107,7 @@ export const allNewsData = [
     excerpt: 'A partir del 08 de septiembre de 2025 se reinicia la entrega del beneficio de ración servida de comidas calientes para 1.000 adultos mayores del municipio.',
     image: '/assets/images/news/comedor.jpeg',
     category: 'Bienestar Social',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-03T16:45:00'),
     content: `
       <p>La <strong>Alcaldía de Arauca</strong> informa que a partir del 08 de septiembre de 2025 se reinicia la entrega del beneficio de ración servida de comidas calientes.</p>
       
@@ -125,7 +125,7 @@ export const allNewsData = [
     excerpt: 'La gestora social departamental de Arauca, Gleydis Torres, lideró una mesa de articulación para promover el Cacao araucano y coordinar eventos del 9 al 12 de octubre.',
     image: '/assets/images/news/gestora-social-principal.jpeg',
     category: 'Desarrollo Rural',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-03T09:20:00'),
     content: `
       <p>La gestora social departamental de Arauca, <strong>Gleydis Torres</strong>, lideró una mesa de articulación con la <strong>Fundación El Alcaraván</strong> y la <strong>Alcaldía de Arauquita</strong>, con el objetivo de promover el Cacao araucano y coordinar la preparación de los grandes eventos que se llevarán a cabo en el municipio del 9 al 12 de octubre.</p>
       
@@ -162,7 +162,7 @@ export const allNewsData = [
     excerpt: 'La diputada confirmó la aprobación de más de 28 mil millones de pesos para la pavimentación de la vía hacia el sitio turístico Alto Cravo.',
     image: '/assets/images/news/diputada-principal.jpeg',
     category: 'Infraestructura',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-03T14:00:00'),
     content: `
       <p>La diputada <strong>Alexa Milena Quirife Bohórquez</strong> confirmó la aprobación de los recursos para la pavimentación de la vía que conduce al sitio turístico <strong>Alto Cravo</strong>, en el municipio de Tame, tras varias gestiones adelantadas junto al alcalde <strong>Miguel Bastos</strong> en la ciudad de Bogotá.</p>
       
@@ -199,7 +199,7 @@ export const allNewsData = [
     excerpt: 'Gestores de convivencia de la Secretaría de Gobierno y Seguridad Ciudadana fomentan el respeto, la convivencia pacífica y proyectos de vida alejados de la violencia.',
     image: '/assets/images/news/convivencia-principal.jpeg',
     category: 'Educación',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-03T11:30:00'),
     content: `
       <p>Gestores de convivencia de la <strong>Secretaría de Gobierno y Seguridad Ciudadana de la Gobernación de Arauca</strong> llegaron a instituciones educativas, como la <strong>Gustavo Villa Díaz</strong> en Arauca, para fomentar el respeto, la convivencia pacífica y la construcción de proyectos de vida alejados de la violencia.</p>
       
@@ -235,7 +235,7 @@ export const allNewsData = [
     excerpt: 'Las cifras de la Corte Constitucional revelan que Arauca interpone un alto número de acciones de tutela para garantizar servicios de salud a los araucanos.',
     image: '/assets/images/news/mapa.jpeg',
     category: 'Salud',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-03T08:45:00'),
     content: `
       <p><strong>Arauca ocupa el tercer lugar a nivel nacional</strong> en interponer acciones de tutelas para que le presten un buen servicio de salud a los araucanos.</p>
       
@@ -254,7 +254,7 @@ export const allNewsData = [
     excerpt: 'La Secretaría de Gobierno Municipal posesionó ante el alcalde Juan Qüenza y la Gestora Social Stephany Ortiz Tafur a 20 jóvenes gestores de Convivencia.',
     image: '/assets/images/news/gestores-convivencia-main.jpeg',
     category: 'Gobierno',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-02T15:20:00'),
     content: `
       <p>La Secretaría de Gobierno Municipal posesionó ante el alcalde <strong>Juan Qüenza</strong> y la Gestora Social <strong>Stephany Ortiz Tafur</strong> a 20 jóvenes gestores de Convivencia, atendiendo a un proceso de convocatoria realizado desde esta dependencia municipal.</p>
       
@@ -289,7 +289,7 @@ export const allNewsData = [
     excerpt: 'La Administración Municipal informa que el Ministerio de Vivienda clasificó como Habilitadas a las personas postuladas al Subsidio Familiar de Vivienda en modalidad de Arrendamiento.',
     image: '/assets/images/news/inclusion-social.jpeg',
     category: 'Vivienda',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-02T12:10:00'),
     content: `
       <p>La Administración Municipal, a través de la <strong>Secretaría de Inclusión Social</strong>, informa que el <strong>Ministerio de Vivienda, Ciudad y Territorio</strong> clasificó como Habilitadas a las personas que se postularon al <strong>Subsidio Familiar de Vivienda en la modalidad de Arrendamiento para Población Migrante</strong>.</p>
       
@@ -315,7 +315,7 @@ export const allNewsData = [
     excerpt: 'La charla de sensibilización por parte de los programas de la Secretaría de Hacienda recibieron estudiantes del ciclo VI de la Institución Educativa Francisco José de Caldas.',
     image: '/assets/images/news/colegios-principal.jpeg',
     category: 'Educación',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-02T17:35:00'),
     content: `
       <p>La charla de sensibilización por parte de los programas de la <strong>Secretaría de Hacienda: Cultura Tributaria y Anticontrabando</strong>, recibieron el grupo de estudiantes del ciclo VI (grado once) de la <strong>Institución Educativa Francisco José de Caldas, sede Camilo Torres</strong>; quedando comprometidos con el cumplimiento y promoción de sus deberes como ciudadanos.</p>
       
@@ -359,7 +359,7 @@ export const allNewsData = [
     excerpt: 'La Procuraduría General de la Nación adelantó una visita de vigilancia y control en la Institución Educativa General Santander para garantizar la calidad del PAE.',
     image: '/assets/images/news/pae-principal.jpeg',
     category: 'Educación',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-02T13:25:00'),
     content: `
       <p>Con el propósito de garantizar la calidad, transparencia y buen funcionamiento del <strong>Programa de Alimentación Escolar PAE</strong>, la <strong>Procuraduría General de la Nación</strong> adelantó una visita de vigilancia y control en la <strong>Institución Educativa General Santander sede Bachillerato y sede Miramar</strong>.</p>
       
@@ -411,7 +411,7 @@ export const allNewsData = [
     excerpt: 'Gracias a PIEDEMONT SAS como patrocinador oficial, se lanza el Circuito de la Llanura 2025, una experiencia de sano esparcimiento que impulsa el deporte, turismo y cultura.',
     image: '/assets/images/news/lanzamiento-principal.jpeg',
     category: 'Deportes',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-02T10:40:00'),
     content: `
       <p><strong>Lanzamiento del Circuito de la Llanura 2025</strong></p>
       
@@ -452,7 +452,7 @@ export const allNewsData = [
     excerpt: 'En una misión humanitaria integrada por la Iglesia Católica y la Defensoría del Pueblo, el ELN entregó a tres personas secuestradas en Tame, Arauca.',
     image: '/assets/images/news/liberacion-tame-eln.jpg',
     category: 'Seguridad',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-02T16:15:00'),
     content: `
       <p>En una misión humanitaria integrada por la Iglesia Católica y la Defensoría del Pueblo, el Frente de Guerra Oriental "Comandante en Jefe Manuel Vásquez Castaño" del Ejército de Liberación Nacional (ELN) entregó a tres personas que permanecían secuestradas en el municipio de Tame, Arauca.</p>
       
@@ -477,7 +477,7 @@ export const allNewsData = [
     excerpt: 'El gobernador Renson Martínez Prada lideró una mesa de trabajo para hacer seguimiento a los estudios y diseños del multicampus universitario en Saravena.',
     image: '/assets/images/news/multicampus-saravena-principal.jpg',
     category: 'Educación',
-    date: new Date('2025-09-02'),
+    date: new Date('2025-09-02T09:50:00'),
     content: `
       <p>El gobernador <strong>Renson Martínez Prada</strong> lideró una mesa de trabajo para hacer seguimiento al <strong>Contrato de Consultoría 266 de 2025</strong>, con el cual se adelantan los estudios y diseños del multicampus universitario en Saravena.</p>
       

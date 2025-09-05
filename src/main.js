@@ -8,7 +8,10 @@ import './assets/styles.css'
 const routes = [
   { path: '/', component: Home, name: 'home' },
   { path: '/noticias', component: NewsList, name: 'news-list' },
-  { path: '/noticia/:id', component: () => import('./components/NewsDetail.vue'), name: 'news-detail' }
+  { path: '/noticia/:id', component: () => import('./components/NewsDetail.vue'), name: 'news-detail' },
+  // Admin routes
+  { path: '/admin/login', component: () => import('./components/AdminLogin.vue'), name: 'admin-login' },
+  { path: '/admin/dashboard', component: () => import('./components/AdminDashboard.vue'), name: 'admin-dashboard' }
 ]
 
 const router = createRouter({

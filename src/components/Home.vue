@@ -53,9 +53,14 @@
                 <div class="container">
                   <h2 class="slide-title">{{ news.title }}</h2>
                   <p class="slide-excerpt">{{ news.excerpt }}</p>
-                  <button @click="openNewsModal(news)" class="btn btn-primary">
-                    Leer Más
-                  </button>
+                  <div class="slide-actions">
+                    <button @click="openNewsModal(news)" class="btn btn-primary">
+                      Leer Más
+                    </button>
+                    <button @click="shareNews(news)" class="btn btn-secondary">
+                      🔗 Compartir
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -87,15 +92,22 @@
               v-for="news in highlightedNews" 
               :key="news.id"
               class="news-card card"
-              @click="openNewsModal(news)"
             >
-              <img :src="news.image" :alt="news.title" class="card-image">
+              <img :src="news.image" :alt="news.title" class="card-image" @click="openNewsModal(news)">
               <div class="card-content">
-                <h3 class="card-title">{{ news.title }}</h3>
+                <h3 class="card-title" @click="openNewsModal(news)">{{ news.title }}</h3>
                 <p class="card-excerpt">{{ news.excerpt }}</p>
                 <div class="card-meta">
                   <span>{{ formatDate(news.date) }}</span>
                   <span>{{ news.category }}</span>
+                </div>
+                <div class="card-actions">
+                  <button @click="openNewsModal(news)" class="btn btn-sm btn-primary">
+                    Leer Más
+                  </button>
+                  <button @click="shareNews(news)" class="btn btn-sm btn-secondary">
+                    🔗 Compartir
+                  </button>
                 </div>
               </div>
             </article>
@@ -535,12 +547,14 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { getLatestNews, getHighlightedNews } from '../data/newsData.js'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { getLatestNews, getHighlightedNews, allNewsData } from '../data/newsData.js'
 
 export default {
   name: 'Home',
   setup() {
+    const route = useRoute()
     const currentSlide = ref(0)
     const mobileMenuOpen = ref(false)
     const selectedNews = ref(null)
@@ -605,6 +619,41 @@ export default {
       selectedNews.value = news
       currentImageIndex.value = 0
       document.body.style.overflow = 'hidden'
+    }
+
+    const shareNews = (news) => {
+      const url = `${window.location.origin}/?news=${news.id}`
+      
+      if (navigator.share) {
+        // Usar la API nativa de compartir si está disponible
+        navigator.share({
+          title: news.title,
+          text: news.excerpt,
+          url: url
+        }).catch(err => {
+          console.log('Error al compartir:', err)
+          copyToClipboard(url)
+        })
+      } else {
+        // Fallback: copiar al portapapeles
+        copyToClipboard(url)
+      }
+    }
+
+    const copyToClipboard = async (text) => {
+      try {
+        await navigator.clipboard.writeText(text)
+        // Enlace copiado silenciosamente
+      } catch (err) {
+        // Fallback para navegadores más antiguos
+        const textArea = document.createElement('textarea')
+        textArea.value = text
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        // Enlace copiado silenciosamente
+      }
     }
 
     const closeNewsModal = () => {
@@ -818,6 +867,26 @@ export default {
       startCarousel()
       initializeTheme()
       startThemeWatcher()
+      
+      // Verificar si hay un parámetro de noticia para abrir en modal
+      if (route.query.news) {
+        const newsId = parseInt(route.query.news)
+        const news = allNewsData.find(item => item.id === newsId)
+        if (news) {
+          openNewsModal(news)
+        }
+      }
+    })
+
+    // Observar cambios en la ruta para abrir modal cuando se comparta un enlace
+    watch(() => route.query.news, (newNewsId) => {
+      if (newNewsId) {
+        const newsId = parseInt(newNewsId)
+        const news = allNewsData.find(item => item.id === newsId)
+        if (news) {
+          openNewsModal(news)
+        }
+      }
     })
 
     onUnmounted(() => {
@@ -844,6 +913,8 @@ export default {
       toggleMobileMenu,
       scrollToSection,
       openNewsModal,
+      shareNews,
+      copyToClipboard,
       closeNewsModal,
       getNewsImages,
       nextImage,
@@ -952,6 +1023,7 @@ export default {
 .nav-link:hover::after {
   width: 100%;
 }
+
 
 /* Theme indicator */
 .theme-indicator {
@@ -2304,6 +2376,56 @@ textarea.form-input {
     flex-direction: column;
     gap: 0.25rem;
     padding: 0.75rem;
+  }
+}
+
+/* Estilos para botones de compartir */
+.slide-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .slide-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .card-actions {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 </style>

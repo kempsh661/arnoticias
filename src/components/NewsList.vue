@@ -76,17 +76,24 @@
               v-for="news in filteredNews" 
               :key="news.id"
               class="news-card"
-              @click="openNewsModal(news)"
             >
-              <div class="card-image-container">
+              <div class="card-image-container" @click="openNewsModal(news)">
                 <img :src="news.image" :alt="news.title" class="card-image">
                 <div class="card-category">{{ news.category }}</div>
               </div>
               <div class="card-content">
-                <h3 class="card-title">{{ news.title }}</h3>
+                <h3 class="card-title" @click="openNewsModal(news)">{{ news.title }}</h3>
                 <p class="card-excerpt">{{ news.excerpt }}</p>
                 <div class="card-meta">
                   <span class="card-date">{{ formatDate(news.date) }}</span>
+                </div>
+                <div class="card-actions">
+                  <button @click="openNewsModal(news)" class="btn btn-sm btn-primary">
+                    Leer Más
+                  </button>
+                  <button @click="shareNews(news)" class="btn btn-sm btn-secondary">
+                    🔗 Compartir
+                  </button>
                 </div>
               </div>
             </article>
@@ -296,12 +303,14 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { allNewsData } from '../data/newsData.js'
 
 export default {
   name: 'NewsList',
   setup() {
+    const route = useRoute()
     const mobileMenuOpen = ref(false)
     const selectedNews = ref(null)
     const showContactModal = ref(false)
@@ -342,6 +351,41 @@ export default {
       selectedNews.value = news
       currentImageIndex.value = 0
       document.body.style.overflow = 'hidden'
+    }
+
+    const shareNews = (news) => {
+      const url = `${window.location.origin}/noticias?news=${news.id}`
+      
+      if (navigator.share) {
+        // Usar la API nativa de compartir si está disponible
+        navigator.share({
+          title: news.title,
+          text: news.excerpt,
+          url: url
+        }).catch(err => {
+          console.log('Error al compartir:', err)
+          copyToClipboard(url)
+        })
+      } else {
+        // Fallback: copiar al portapapeles
+        copyToClipboard(url)
+      }
+    }
+
+    const copyToClipboard = async (text) => {
+      try {
+        await navigator.clipboard.writeText(text)
+        // Enlace copiado silenciosamente
+      } catch (err) {
+        // Fallback para navegadores más antiguos
+        const textArea = document.createElement('textarea')
+        textArea.value = text
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        // Enlace copiado silenciosamente
+      }
     }
 
     const closeNewsModal = () => {
@@ -475,6 +519,28 @@ export default {
       return `${themeText} - Horario: ${hour}:00h (Automático)`
     }
 
+    // Verificar si hay un parámetro de noticia para abrir en modal al cargar
+    onMounted(() => {
+      if (route.query.news) {
+        const newsId = parseInt(route.query.news)
+        const news = allNewsData.find(item => item.id === newsId)
+        if (news) {
+          openNewsModal(news)
+        }
+      }
+    })
+
+    // Observar cambios en la ruta para abrir modal cuando se comparta un enlace
+    watch(() => route.query.news, (newNewsId) => {
+      if (newNewsId) {
+        const newsId = parseInt(newNewsId)
+        const news = allNewsData.find(item => item.id === newsId)
+        if (news) {
+          openNewsModal(news)
+        }
+      }
+    })
+
     return {
       mobileMenuOpen,
       selectedNews,
@@ -487,6 +553,8 @@ export default {
       filteredNews,
       toggleMobileMenu,
       openNewsModal,
+      shareNews,
+      copyToClipboard,
       closeNewsModal,
       openContactModal,
       closeContactModal,
@@ -1602,6 +1670,45 @@ textarea.form-input {
   
   .card-title {
     font-size: 1.125rem;
+  }
+}
+
+/* Estilos para botones de compartir */
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .card-actions {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 </style>
