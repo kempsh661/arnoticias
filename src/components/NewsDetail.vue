@@ -141,7 +141,7 @@
 <script>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { allNewsData } from '../data/newsData.js'
+import { newsService } from '../services/api.js'
 
 export default {
   name: 'NewsDetail',
@@ -149,10 +149,18 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const news = ref(null)
-    const allNews = ref(allNewsData)
+    const allNews = ref([])
 
-    // Usar los datos reales de newsData.js
-    const newsData = allNewsData
+    // Cargar noticias desde el API
+    const loadNews = async () => {
+      try {
+        const response = await newsService.getAll({ per_page: 100 })
+        allNews.value = response.data.data || []
+      } catch (error) {
+        console.error('Error cargando noticias:', error)
+        allNews.value = []
+      }
+    }
 
     const relatedNews = computed(() => {
       if (!news.value) return []
@@ -162,21 +170,6 @@ export default {
         .slice(0, 3)
     })
 
-    const loadNews = () => {
-      const newsId = parseInt(route.params.id)
-      const foundNews = newsData.find(item => item.id === newsId)
-      
-      if (foundNews) {
-        // Redirigir a la página principal con parámetro para abrir modal
-        router.replace({
-          path: '/',
-          query: { news: newsId }
-        })
-      } else {
-        // Noticia no encontrada, redirigir al inicio
-        router.replace('/')
-      }
-    }
 
     const formatDate = (date) => {
       return new Intl.DateTimeFormat('es-ES', {
@@ -206,8 +199,22 @@ export default {
       }
     }
 
-    onMounted(() => {
-      loadNews()
+    const loadCurrentNews = async () => {
+      try {
+        const newsId = parseInt(route.params.id)
+        const response = await newsService.getById(newsId)
+        news.value = response.data
+        
+        // Cargar noticias relacionadas
+        await loadNews()
+      } catch (error) {
+        console.error('Error cargando noticia:', error)
+        router.push('/')
+      }
+    }
+
+    onMounted(async () => {
+      await loadCurrentNews()
       initializeTheme()
       // Scroll to top when component mounts
       window.scrollTo(0, 0)

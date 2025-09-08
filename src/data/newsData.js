@@ -1,5 +1,6 @@
 // Datos centralizados de todas las noticias
-export const allNewsData = [
+// Noticias por defecto (se usan solo si no hay datos guardados)
+const defaultNewsData = [
   // Noticia más reciente
   {
     id: 107,
@@ -515,6 +516,89 @@ export const allNewsData = [
     video: null
   }
 ]
+
+// Clave para localStorage
+const STORAGE_KEY = 'arauca-news-data'
+
+// Función para cargar noticias desde localStorage o usar las por defecto
+const loadNewsData = () => {
+  try {
+    const storedData = localStorage.getItem(STORAGE_KEY)
+    if (storedData) {
+      const parsedData = JSON.parse(storedData)
+      // Convertir las fechas de string a Date objects
+      return parsedData.map(news => ({
+        ...news,
+        date: new Date(news.date),
+        published_at: news.published_at ? new Date(news.published_at) : news.date
+      }))
+    }
+  } catch (error) {
+    console.error('Error cargando noticias desde localStorage:', error)
+  }
+  
+  // Si no hay datos guardados o hay error, usar los datos por defecto
+  return defaultNewsData
+}
+
+// Función para guardar noticias en localStorage
+const saveNewsData = (newsData) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newsData))
+  } catch (error) {
+    console.error('Error guardando noticias en localStorage:', error)
+  }
+}
+
+// Array reactivo de noticias
+let allNewsData = loadNewsData()
+
+// Función para agregar una nueva noticia
+export const addNews = (newsData) => {
+  const newNews = {
+    ...newsData,
+    id: newsData.id || Date.now(),
+    date: new Date(),
+    published_at: newsData.published ? new Date() : null,
+    published: newsData.published || false,
+    featured: newsData.featured || false
+  }
+  
+  allNewsData.unshift(newNews)
+  saveNewsData(allNewsData)
+  return newNews
+}
+
+// Función para actualizar una noticia existente
+export const updateNews = (newsId, updatedData) => {
+  const index = allNewsData.findIndex(news => news.id === newsId)
+  if (index !== -1) {
+    allNewsData[index] = {
+      ...allNewsData[index],
+      ...updatedData,
+      published_at: updatedData.published ? (allNewsData[index].published_at || new Date()) : null
+    }
+    saveNewsData(allNewsData)
+    return allNewsData[index]
+  }
+  return null
+}
+
+// Función para eliminar una noticia
+export const deleteNews = (newsId) => {
+  const index = allNewsData.findIndex(news => news.id === newsId)
+  if (index !== -1) {
+    const deletedNews = allNewsData.splice(index, 1)[0]
+    saveNewsData(allNewsData)
+    return deletedNews
+  }
+  return null
+}
+
+// Función para obtener todas las noticias
+export const getAllNews = () => {
+  return allNewsData
+}
 
 // Función para obtener las últimas 6 noticias (para el carrusel)
 export const getLatestNews = (count = 6) => {

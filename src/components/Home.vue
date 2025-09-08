@@ -278,10 +278,54 @@
         <!-- Modal Body -->
         <div class="modal-body modern-body">
           <div v-if="selectedNews.video" class="modal-video-section">
-            <video controls :poster="selectedNews.image" class="modal-video">
+            <!-- Video de YouTube -->
+            <iframe 
+              v-if="getVideoType(selectedNews.video) === 'youtube'"
+              :src="getYouTubeEmbedUrl(selectedNews.video)"
+              class="modal-video iframe-video"
+              frameborder="0"
+              allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            ></iframe>
+            
+            <!-- Video de Facebook -->
+            <iframe 
+              v-else-if="getVideoType(selectedNews.video) === 'facebook'"
+              :src="getFacebookEmbedUrl(selectedNews.video)"
+              class="modal-video iframe-video"
+              frameborder="0"
+              allowfullscreen
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            ></iframe>
+            
+            <!-- Video de Vimeo -->
+            <iframe 
+              v-else-if="getVideoType(selectedNews.video) === 'vimeo'"
+              :src="getVimeoEmbedUrl(selectedNews.video)"
+              class="modal-video iframe-video"
+              frameborder="0"
+              allowfullscreen
+            ></iframe>
+            
+            <!-- Video directo (MP4, etc.) -->
+            <video 
+              v-else-if="getVideoType(selectedNews.video) === 'direct'"
+              controls 
+              :poster="selectedNews.image" 
+              class="modal-video"
+            >
               <source :src="selectedNews.video" type="video/mp4">
               Tu navegador no soporta el elemento video.
             </video>
+            
+            <!-- Fallback para URLs desconocidas -->
+            <div v-else class="video-fallback">
+              <p>⚠️ Tipo de video no soportado.</p>
+              <p>Tipos soportados: YouTube, Facebook, Vimeo, MP4</p>
+              <a :href="selectedNews.video" target="_blank" class="video-link">
+                Abrir video en nueva pestaña: {{ selectedNews.video }}
+              </a>
+            </div>
           </div>
           
           <div class="modal-content-text" v-html="getCleanContent(selectedNews)"></div>
@@ -549,7 +593,7 @@
 <script>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { getLatestNews, getHighlightedNews, allNewsData } from '../data/newsData.js'
+import { newsService } from '../services/api.js'
 
 export default {
   name: 'Home',
@@ -572,12 +616,30 @@ export default {
     let carouselInterval = null
 
     // Datos de noticias - Las 6 más recientes para el carrusel
-    const featuredNews = ref(getLatestNews(6))
+    const featuredNews = ref([])
 
 
     // Noticias destacadas - Excluyendo las del carrusel
-    const highlightedNews = ref(getHighlightedNews(3))
+    const highlightedNews = ref([])
 
+    const loadNews = async () => {
+      try {
+        // Cargar noticias más recientes
+        const latestResponse = await newsService.getLatest(6)
+        featuredNews.value = latestResponse.data || []
+        
+        // Cargar noticias destacadas
+        const featuredResponse = await newsService.getFeatured()
+        highlightedNews.value = featuredResponse.data || []
+        
+      } catch (error) {
+        console.error('Error cargando noticias:', error)
+        // En caso de error, usar datos por defecto
+        featuredNews.value = []
+        highlightedNews.value = []
+      }
+    }
+    
     const startCarousel = () => {
       carouselInterval = setInterval(() => {
         nextSlide()
@@ -666,7 +728,47 @@ export default {
     const getNewsImages = (news) => {
       const images = []
       
-      // Imagen principal
+      console.log('🔍 Home getNewsImages - datos de noticia:', news)
+      
+      // Prioridad 1: Usar galería nueva si existe
+      if (news.gallery && news.gallery.length > 0) {
+        console.log('📸 Home - Galería encontrada:', news.gallery.length, 'imágenes')
+        console.log('📊 Home - Datos de galería:', news.gallery)
+        
+        // Ordenar por orden y mostrar imagen principal primero
+        const sortedGallery = [...news.gallery].sort((a, b) => {
+          if (a.is_main) return -1  // Imagen principal va primero
+          if (b.is_main) return 1
+          return a.order - b.order  // Luego por orden
+        })
+        
+        sortedGallery.forEach((image, index) => {
+          const imageUrl = image.large_url || image.medium_url || image.thumbnail_url || image.optimized_url
+          console.log(`🖼️ Home - Imagen ${index + 1}:`, {
+            id: image.id,
+            url: imageUrl,
+            large_url: image.large_url,
+            medium_url: image.medium_url,
+            thumbnail_url: image.thumbnail_url,
+            optimized_url: image.optimized_url
+          })
+          
+          if (imageUrl) {
+            images.push({
+              src: imageUrl,
+              alt: image.alt_text || news.title,
+              caption: image.caption || (image.is_main ? 'Imagen principal' : `Imagen ${index + 1}`)
+            })
+          } else {
+            console.warn(`⚠️ Home - No se encontró URL válida para imagen ${image.id}`)
+          }
+        })
+        
+        console.log('✅ Home - Imágenes procesadas:', images.length)
+        return images
+      }
+      
+      // Fallback: Imagen principal legacy
       if (news.image) {
         images.push({
           src: news.image,
@@ -675,7 +777,7 @@ export default {
         })
       }
       
-      // Extraer imágenes del contenido HTML
+      // Fallback: Extraer imágenes del contenido HTML (para noticias antiguas)
       if (news.content) {
         const tempDiv = document.createElement('div')
         tempDiv.innerHTML = news.content
@@ -803,17 +905,32 @@ export default {
     }
 
     const formatDate = (date) => {
-      return new Intl.DateTimeFormat('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).format(date)
+      if (!date) return 'Fecha no disponible'
+      
+      try {
+        const dateObj = new Date(date)
+        
+        // Verificar si la fecha es válida
+        if (isNaN(dateObj.getTime())) {
+          console.warn('Fecha inválida recibida:', date)
+          return 'Fecha inválida'
+        }
+        
+        return new Intl.DateTimeFormat('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }).format(dateObj)
+      } catch (error) {
+        console.error('Error formateando fecha:', error, 'Fecha recibida:', date)
+        return 'Error en fecha'
+      }
     }
 
     // Funciones para el indicador de tema
     const getThemeIcon = () => {
       const hour = new Date().getHours()
-      if (hour >= 6 && hour < 12) return '🌅' // Amanecer
+      if (hour >= 7 && hour < 12) return '🌅' // Amanecer
       if (hour >= 12 && hour < 18) return '☀️' // Día
       if (hour >= 18 && hour < 20) return '🌆' // Atardecer
       return '🌙' // Noche
@@ -826,15 +943,101 @@ export default {
       return `${themeText} - Horario: ${hour}:00h (Automático)`
     }
 
+    // Funciones para manejo de videos
+    const getVideoType = (videoUrl) => {
+      if (!videoUrl) return null
+      
+      // Detectar YouTube
+      if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+        return 'youtube'
+      }
+      
+      // Detectar Facebook
+      if (videoUrl.includes('facebook.com') || videoUrl.includes('fb.watch')) {
+        return 'facebook'
+      }
+      
+      // Detectar Vimeo
+      if (videoUrl.includes('vimeo.com')) {
+        return 'vimeo'
+      }
+      
+      // Detectar archivos de video directos
+      if (videoUrl.match(/\.(mp4|webm|ogg|avi|mov)(\?.*)?$/i)) {
+        return 'direct'
+      }
+      
+      return 'unknown'
+    }
+
+    const getYouTubeEmbedUrl = (url) => {
+      let videoId = null
+      
+      // Formato: https://www.youtube.com/watch?v=VIDEO_ID
+      const watchMatch = url.match(/[?&]v=([^&]+)/)
+      if (watchMatch) {
+        videoId = watchMatch[1]
+      }
+      
+      // Formato: https://youtu.be/VIDEO_ID
+      const shortMatch = url.match(/youtu\.be\/([^?&]+)/)
+      if (shortMatch) {
+        videoId = shortMatch[1]
+      }
+      
+      // Formato embed directo
+      const embedMatch = url.match(/youtube\.com\/embed\/([^?&]+)/)
+      if (embedMatch) {
+        videoId = embedMatch[1]
+      }
+      
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&controls=1`
+      }
+      
+      return null
+    }
+
+    const getVimeoEmbedUrl = (url) => {
+      const match = url.match(/vimeo\.com\/(\d+)/)
+      if (match) {
+        return `https://player.vimeo.com/video/${match[1]}`
+      }
+      return null
+    }
+
+    const getFacebookEmbedUrl = (url) => {
+      // Limpiar la URL y extraer el enlace original
+      let cleanUrl = url
+      
+      // Si es un enlace fb.watch, obtener la URL original
+      if (url.includes('fb.watch')) {
+        // Para fb.watch necesitaríamos redirigir, por ahora usamos directamente
+        cleanUrl = url
+      }
+      
+      // Codificar la URL para el iframe de Facebook
+      const encodedUrl = encodeURIComponent(cleanUrl)
+      return `https://www.facebook.com/plugins/video.php?height=314&href=${encodedUrl}&show_text=false&width=560&t=0`
+    }
+
     // Sistema de tema automático día/noche
     const setThemeBasedOnTime = () => {
       const hour = new Date().getHours()
-      const theme = (hour >= 20 || hour < 6) ? 'dark' : 'light'
+      // Tema oscuro: 18:00 - 7:00 (más natural)
+      const theme = (hour >= 18 || hour < 7) ? 'dark' : 'light'
+      
+      // Debug info
+      console.log(`🕐 Hora: ${hour}:${new Date().getMinutes()}, Tema: ${theme}`)
+      
       document.documentElement.setAttribute('data-theme', theme)
       
       // Guardar preferencia
       localStorage.setItem('theme-preference', theme)
       localStorage.setItem('theme-set-time', Date.now().toString())
+      
+      // Force update del body si es necesario
+      document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease'
     }
 
     // Verificar tema guardado y tiempo
@@ -842,15 +1045,23 @@ export default {
       const savedTheme = localStorage.getItem('theme-preference')
       const savedTime = localStorage.getItem('theme-set-time')
       
+      console.log('🎨 Inicializando tema...')
+      console.log('💾 Tema guardado:', savedTheme)
+      
       if (savedTheme && savedTime) {
         const timeDiff = Date.now() - parseInt(savedTime)
-        // Si han pasado más de 30 minutos, revisar el horario
-        if (timeDiff > 30 * 60 * 1000) {
+        console.log('⏰ Tiempo desde última actualización:', Math.round(timeDiff / 60000), 'minutos')
+        
+        // Si han pasado más de 5 minutos, revisar el horario (más frecuente)
+        if (timeDiff > 5 * 60 * 1000) {
+          console.log('🔄 Actualizando tema por tiempo transcurrido')
           setThemeBasedOnTime()
         } else {
+          console.log('✅ Usando tema guardado:', savedTheme)
           document.documentElement.setAttribute('data-theme', savedTheme)
         }
       } else {
+        console.log('🆕 Primera vez, estableciendo tema basado en horario')
         setThemeBasedOnTime()
       }
     }
@@ -859,19 +1070,40 @@ export default {
     let themeInterval = null
     const startThemeWatcher = () => {
       themeInterval = setInterval(() => {
+        console.log('⚡ Verificación automática de tema...')
         setThemeBasedOnTime()
-      }, 30 * 60 * 1000) // Verificar cada 30 minutos
+      }, 5 * 60 * 1000) // Verificar cada 5 minutos
     }
 
-    onMounted(() => {
+    // Función para forzar actualización del tema (para debugging)
+    const forceThemeUpdate = () => {
+      console.log('🔥 Forzando actualización de tema...')
+      localStorage.removeItem('theme-preference')
+      localStorage.removeItem('theme-set-time')
+      setThemeBasedOnTime()
+    }
+
+    // Agregar escuchador de eventos para debugging (Ctrl+Shift+T)
+    const handleKeyPress = (event) => {
+      if (event.ctrlKey && event.shiftKey && event.key === 'T') {
+        forceThemeUpdate()
+      }
+    }
+
+    onMounted(async () => {
+      await loadNews()
       startCarousel()
       initializeTheme()
       startThemeWatcher()
       
+      // Agregar escuchador de eventos
+      document.addEventListener('keydown', handleKeyPress)
+      
       // Verificar si hay un parámetro de noticia para abrir en modal
       if (route.query.news) {
         const newsId = parseInt(route.query.news)
-        const news = allNewsData.find(item => item.id === newsId)
+        const news = featuredNews.value.find(item => item.id === newsId) || 
+                     highlightedNews.value.find(item => item.id === newsId)
         if (news) {
           openNewsModal(news)
         }
@@ -882,7 +1114,8 @@ export default {
     watch(() => route.query.news, (newNewsId) => {
       if (newNewsId) {
         const newsId = parseInt(newNewsId)
-        const news = allNewsData.find(item => item.id === newsId)
+        const news = featuredNews.value.find(item => item.id === newsId) || 
+                     highlightedNews.value.find(item => item.id === newsId)
         if (news) {
           openNewsModal(news)
         }
@@ -894,6 +1127,9 @@ export default {
       if (themeInterval) {
         clearInterval(themeInterval)
       }
+      
+      // Remover escuchador de eventos
+      document.removeEventListener('keydown', handleKeyPress)
     })
 
     return {
@@ -930,7 +1166,11 @@ export default {
       submitContact,
       formatDate,
       getThemeIcon,
-      getThemeTooltip
+      getThemeTooltip,
+      getVideoType,
+      getYouTubeEmbedUrl,
+      getVimeoEmbedUrl,
+      getFacebookEmbedUrl
     }
   }
 }
@@ -1765,6 +2005,38 @@ export default {
   width: 100%;
   max-height: 400px;
   border-radius: 15px;
+}
+
+.iframe-video {
+  width: 100%;
+  height: 400px;
+  border: none;
+  border-radius: 15px;
+}
+
+.video-fallback {
+  text-align: center;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border-radius: 15px;
+  border: 2px dashed var(--border-light);
+}
+
+.video-fallback p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.video-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.video-link:hover {
+  text-decoration: underline;
 }
 
 /* Content Text Styling */

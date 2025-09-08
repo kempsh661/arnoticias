@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Configuración base de la API
-const API_BASE_URL = 'http://localhost:8000/api/v1'
+const API_BASE_URL = 'https://barnoticias-production.up.railway.app/api/v1'
 
 // Crear instancia de axios
 const api = axios.create({
@@ -84,6 +84,11 @@ export const newsService = {
     return response.data
   },
 
+  async getAllForAdmin(params = {}) {
+    const response = await api.get('/news', { params: { ...params, admin: 'true' } })
+    return response.data
+  },
+
   async getById(id) {
     const response = await api.get(`/news/${id}`)
     return response.data
@@ -116,6 +121,57 @@ export const newsService = {
 
   async getLatest(limit = 6) {
     const response = await api.get('/news/latest', { params: { limit } })
+    return response.data
+  },
+
+  async unpublish(id) {
+    const response = await api.post(`/news/${id}/unpublish`)
+    return response.data
+  },
+
+  async republish(id) {
+    const response = await api.post(`/news/${id}/republish`)
+    return response.data
+  },
+
+  async getAutoDeleteCandidates() {
+    try {
+      const response = await api.get('/news/auto-delete/candidates')
+      return response.data
+    } catch (error) {
+      console.error('Error en getAutoDeleteCandidates:', error)
+      throw error
+    }
+  },
+
+  async executeAutoDelete() {
+    const response = await api.post('/news/auto-delete/execute')
+    return response.data
+  },
+
+  // News Images functions
+  async getNewsImages(newsId) {
+    const response = await api.get(`/news/${newsId}/images`)
+    return response.data
+  },
+
+  async uploadNewsImages(newsId, images) {
+    const response = await api.post(`/news/${newsId}/images`, { images })
+    return response.data
+  },
+
+  async setMainImage(newsId, imageId) {
+    const response = await api.put(`/news/${newsId}/images/${imageId}/main`)
+    return response.data
+  },
+
+  async updateImagesOrder(newsId, images) {
+    const response = await api.put(`/news/${newsId}/images/order`, { images })
+    return response.data
+  },
+
+  async deleteNewsImage(newsId, imageId) {
+    const response = await api.delete(`/news/${newsId}/images/${imageId}`)
     return response.data
   }
 }

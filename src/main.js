@@ -3,11 +3,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import Home from './components/Home.vue'
 import NewsList from './components/NewsList.vue'
+import TestNews from './components/TestNews.vue'
 import './assets/styles.css'
 
 const routes = [
   { path: '/', component: Home, name: 'home' },
   { path: '/noticias', component: NewsList, name: 'news-list' },
+  { path: '/test-news', component: TestNews, name: 'test-news' },
   { path: '/noticia/:id', component: () => import('./components/NewsDetail.vue'), name: 'news-detail' },
   // Admin routes
   { path: '/admin/login', component: () => import('./components/AdminLogin.vue'), name: 'admin-login' },
