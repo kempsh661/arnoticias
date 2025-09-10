@@ -1,1 +1,1 @@
-web: npm start
+web: cp env.production .env && npm start
