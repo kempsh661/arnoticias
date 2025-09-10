@@ -79,7 +79,7 @@
             >
               <div class="card-image-container" @click="openNewsModal(news)">
                 <img 
-                  :src="news.thumbnail_url || news.optimized_image_url || news.image" 
+                  :src="getOptimizedImageUrl(news.thumbnail_url || news.optimized_image_url || news.image, 'medium')" 
                   :alt="news.title" 
                   class="card-image"
                   loading="lazy"
@@ -236,7 +236,7 @@
             <video 
               v-else-if="getVideoType(selectedNews.video) === 'direct'"
               controls 
-              :poster="selectedNews.medium_url || selectedNews.optimized_image_url || selectedNews.image" 
+              :poster="getOptimizedImageUrl(selectedNews.medium_url || selectedNews.optimized_image_url || selectedNews.image, 'large')" 
               class="modal-video"
             >
               <source :src="selectedNews.video" type="video/mp4">
@@ -410,10 +410,31 @@ export default {
       mobileMenuOpen.value = !mobileMenuOpen.value
     }
 
-    const openNewsModal = (news) => {
-      selectedNews.value = news
-      currentImageIndex.value = 0
-      document.body.style.overflow = 'hidden'
+    const openNewsModal = async (news) => {
+      try {
+        // Cargar los datos completos de la noticia desde la API
+        console.log('📖 Cargando noticia completa para modal:', news.id)
+        const response = await newsService.getById(news.id)
+        
+        if (response.success) {
+          selectedNews.value = response.data
+          currentImageIndex.value = 0
+          document.body.style.overflow = 'hidden'
+          console.log('✅ Noticia completa cargada:', response.data.title)
+        } else {
+          console.error('❌ Error al cargar noticia completa:', response.message)
+          // Fallback: usar los datos parciales disponibles
+          selectedNews.value = news
+          currentImageIndex.value = 0
+          document.body.style.overflow = 'hidden'
+        }
+      } catch (error) {
+        console.error('❌ Error al cargar noticia completa:', error)
+        // Fallback: usar los datos parciales disponibles
+        selectedNews.value = news
+        currentImageIndex.value = 0
+        document.body.style.overflow = 'hidden'
+      }
     }
 
     const shareNews = (news) => {
@@ -545,7 +566,7 @@ export default {
           
           if (imageUrl) {
             images.push({
-              src: imageUrl,
+              src: getOptimizedImageUrl(imageUrl, 'large'),
               alt: image.alt_text || news.title,
               caption: image.caption || (image.is_main ? 'Imagen principal' : `Imagen ${index + 1}`)
             })
@@ -561,7 +582,7 @@ export default {
       // Fallback: Imagen principal legacy
       if (news.image) {
         images.push({
-          src: news.image,
+          src: getOptimizedImageUrl(news.image, 'large'),
           alt: news.title,
           caption: 'Imagen principal'
         })
@@ -576,7 +597,7 @@ export default {
         imgElements.forEach((img, index) => {
           if (img.src !== news.image) {
             images.push({
-              src: img.src,
+              src: getOptimizedImageUrl(img.src, 'large'),
               alt: img.alt || `Imagen ${index + 1}`,
               caption: img.alt || `Imagen ${index + 1}`
             })
@@ -623,7 +644,7 @@ export default {
       if (news.medium_url) {
         cleanContent = cleanContent.replace(
           /<img([^>]*?)src="data:image\/[^"]*"([^>]*?)>/g, 
-          `<img$1src="${news.medium_url}"$2 loading="lazy">`
+          `<img$1src="${getOptimizedImageUrl(news.medium_url, 'medium')}"$2 loading="lazy">`
         )
       }
       
@@ -775,6 +796,49 @@ export default {
       return `https://www.facebook.com/plugins/video.php?height=314&href=${encodedUrl}&show_text=false&width=560&t=0`
     }
 
+    // Función para obtener URLs optimizadas de imágenes
+    const getOptimizedImageUrl = (imageUrl, size = 'medium') => {
+      if (!imageUrl) return ''
+      
+      // Si es una URL de Cloudinary, usar la URL directamente
+      if (imageUrl.includes('cloudinary.com')) {
+        return imageUrl
+      }
+      
+      // Si es una URL local, agregar parámetros de optimización
+      if (imageUrl.includes('localhost:8000') || imageUrl.includes('api/v1/news')) {
+        const baseUrl = imageUrl.split('?')[0]
+        const params = new URLSearchParams()
+        
+        switch (size) {
+          case 'thumbnail':
+            params.set('width', '400')
+            params.set('height', '300')
+            params.set('quality', '80')
+            break
+          case 'medium':
+            params.set('width', '800')
+            params.set('height', '600')
+            params.set('quality', '85')
+            break
+          case 'large':
+            params.set('width', '1200')
+            params.set('height', '900')
+            params.set('quality', '90')
+            break
+          default:
+            params.set('width', '800')
+            params.set('height', '600')
+            params.set('quality', '85')
+        }
+        
+        return `${baseUrl}?${params.toString()}`
+      }
+      
+      // Si es una URL base64 o otra, devolver tal como está
+      return imageUrl
+    }
+
     // Verificar si hay un parámetro de noticia para abrir en modal al cargar
     onMounted(async () => {
       await loadNews()
@@ -829,7 +893,8 @@ export default {
       getVideoType,
       getYouTubeEmbedUrl,
       getVimeoEmbedUrl,
-      getFacebookEmbedUrl
+      getFacebookEmbedUrl,
+      getOptimizedImageUrl
     }
   }
 }
@@ -1548,10 +1613,13 @@ export default {
   font-size: 1.125rem;
   line-height: 1.8;
   color: var(--text-secondary);
+  white-space: pre-wrap; /* Preserva espacios y saltos de línea */
+  word-wrap: break-word; /* Permite quebrar palabras largas */
 }
 
 .modal-content-text p {
   margin-bottom: 1.5rem;
+  white-space: pre-wrap; /* Preserva formato de párrafos */
 }
 
 .modal-content-text p:first-child {
@@ -1569,11 +1637,13 @@ export default {
 .modal-content-text ol {
   margin: 1.5rem 0;
   padding-left: 2rem;
+  white-space: normal; /* Listas con formato normal */
 }
 
 .modal-content-text li {
   margin-bottom: 0.75rem;
   position: relative;
+  white-space: pre-wrap; /* Preserva formato en listas */
 }
 
 .modal-content-text ul li::marker {
@@ -1583,6 +1653,45 @@ export default {
 .modal-content-text ol li::marker {
   color: var(--primary-color);
   font-weight: bold;
+}
+
+/* Estilos adicionales para preservar formato */
+.modal-content-text h1,
+.modal-content-text h2,
+.modal-content-text h3,
+.modal-content-text h4,
+.modal-content-text h5,
+.modal-content-text h6 {
+  margin: 1.5rem 0 1rem 0;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.modal-content-text blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-accent);
+  border-left: 4px solid var(--primary-color);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.modal-content-text pre {
+  background-color: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  overflow-x: auto;
+  white-space: pre;
+  font-family: 'Courier New', monospace;
+}
+
+.modal-content-text code {
+  background-color: var(--bg-secondary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
 }
 
 /* Modern News Gallery Styles */

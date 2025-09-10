@@ -1,15 +1,39 @@
 import axios from 'axios'
 
 // Configuración base de la API
-const API_BASE_URL = 'https://barnoticias-production.up.railway.app/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 
-// Crear instancia de axios
+// Cache simple en memoria
+const cache = new Map()
+const CACHE_DURATION = parseInt(import.meta.env.VITE_CACHE_DURATION) || 5 * 60 * 1000 // 5 minutos por defecto
+
+// Función para obtener datos del cache
+const getCachedData = (key) => {
+  const cached = cache.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`📦 Datos obtenidos del cache: ${key}`)
+    return cached.data
+  }
+  return null
+}
+
+// Función para guardar datos en cache
+const setCachedData = (key, data) => {
+  cache.set(key, {
+    data,
+    timestamp: Date.now()
+  })
+}
+
+// Crear instancia de axios con optimizaciones
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  }
+  },
+  timeout: 10000, // 10 segundos timeout
+  validateStatus: (status) => status < 500 // No fallar en errores 4xx
 })
 
 // Interceptor para agregar el token de autenticación
@@ -90,7 +114,12 @@ export const newsService = {
   },
 
   async getById(id) {
+    const cacheKey = `news_${id}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
     const response = await api.get(`/news/${id}`)
+    setCachedData(cacheKey, response.data)
     return response.data
   },
 
@@ -115,12 +144,22 @@ export const newsService = {
   },
 
   async getFeatured() {
+    const cacheKey = 'featured_news'
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
     const response = await api.get('/news/featured')
+    setCachedData(cacheKey, response.data)
     return response.data
   },
 
   async getLatest(limit = 6) {
+    const cacheKey = `latest_${limit}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
     const response = await api.get('/news/latest', { params: { limit } })
+    setCachedData(cacheKey, response.data)
     return response.data
   },
 

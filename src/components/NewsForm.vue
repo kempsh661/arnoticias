@@ -1733,10 +1733,52 @@ textarea.form-input {
   font-size: 1rem;
   line-height: 1.7;
   color: #333;
+  white-space: pre-wrap; /* Preserva espacios y saltos de línea */
+  word-wrap: break-word; /* Permite quebrar palabras largas */
 }
 
 .article-text p {
   margin-bottom: 1.5rem;
+  white-space: pre-wrap; /* Preserva formato de párrafos */
+}
+
+/* Estilos adicionales para preservar formato */
+.article-text h1,
+.article-text h2,
+.article-text h3,
+.article-text h4,
+.article-text h5,
+.article-text h6 {
+  margin: 1.5rem 0 1rem 0;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.article-text blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-left: 4px solid #667eea;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.article-text pre {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  white-space: pre;
+  font-family: 'Courier New', monospace;
+}
+
+.article-text code {
+  background-color: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
 }
 
 @media (max-width: 768px) {

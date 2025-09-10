@@ -46,11 +46,21 @@
               :class="{ active: currentSlide === index }"
             >
               <div class="slide-image">
-                <img :src="news.image" :alt="news.title" />
+                <img 
+                :src="getOptimizedImageUrl(news.image, 'large')" 
+                :alt="news.title" 
+                loading="eager"
+                decoding="async"
+                fetchpriority="high"
+              />
                 <div class="slide-overlay"></div>
               </div>
               <div class="slide-content">
                 <div class="container">
+                  <div class="slide-meta">
+                    <span class="slide-date">🗓️ {{ formatDate(news.published_at || news.date) }}</span>
+                    <span class="slide-category">📂 {{ news.category }}</span>
+                  </div>
                   <h2 class="slide-title">{{ news.title }}</h2>
                   <p class="slide-excerpt">{{ news.excerpt }}</p>
                   <div class="slide-actions">
@@ -93,12 +103,19 @@
               :key="news.id"
               class="news-card card"
             >
-              <img :src="news.image" :alt="news.title" class="card-image" @click="openNewsModal(news)">
+              <img 
+                :src="getOptimizedImageUrl(news.image, 'medium')" 
+                :alt="news.title" 
+                class="card-image" 
+                loading="lazy"
+                decoding="async"
+                @click="openNewsModal(news)"
+              >
               <div class="card-content">
                 <h3 class="card-title" @click="openNewsModal(news)">{{ news.title }}</h3>
                 <p class="card-excerpt">{{ news.excerpt }}</p>
                 <div class="card-meta">
-                  <span>{{ formatDate(news.date) }}</span>
+                  <span>{{ formatDate(news.published_at || news.date) }}</span>
                   <span>{{ news.category }}</span>
                 </div>
                 <div class="card-actions">
@@ -240,11 +257,18 @@
               <div class="hero-overlay"></div>
             </div>
             
+            <!-- Loading indicator para imágenes -->
+            <div v-if="loadingModalImages" class="loading-overlay">
+              <div class="loading-spinner"></div>
+              <p>Cargando imágenes...</p>
+            </div>
+            
             <!-- Carousel Controls -->
             <div v-if="getNewsImages(selectedNews).length > 1" class="hero-carousel-controls">
-              <button @click="prevImage" class="hero-carousel-btn hero-carousel-prev">‹</button>
-              <button @click="nextImage" class="hero-carousel-btn hero-carousel-next">›</button>
+              <button @click="prevImage" class="hero-carousel-btn hero-carousel-prev" title="Imagen anterior">‹</button>
+              <button @click="nextImage" class="hero-carousel-btn hero-carousel-next" title="Siguiente imagen">›</button>
             </div>
+            
             
             <!-- Carousel Indicators -->
             <div v-if="getNewsImages(selectedNews).length > 1" class="hero-carousel-indicators">
@@ -264,12 +288,22 @@
                 {{ currentImageIndex + 1 }} / {{ getNewsImages(selectedNews).length }}
               </span>
             </div>
+            
+            <!-- DEBUG: Información para desarrollo (comentado) -->
+            <!-- 
+            <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 1000;">
+              🖼️ Imágenes: {{ getNewsImages(selectedNews).length }}<br>
+              📊 Galería: {{ selectedNews?.gallery?.length || 'NO' }}<br>
+              🎯 URL: {{ getNewsImages(selectedNews)[0]?.src?.substring(0, 30) || 'NO' }}...<br>
+              🔍 Current Index: {{ currentImageIndex }}
+            </div>
+            -->
           </div>
           
           <div class="modal-hero-content">
             <div class="modal-meta-badges">
               <span class="modal-category-badge">{{ selectedNews.category }}</span>
-              <span class="modal-date-badge">{{ formatDate(selectedNews.date) }}</span>
+              <span class="modal-date-badge">{{ formatDate(selectedNews.published_at || selectedNews.date) }}</span>
             </div>
             <h1 class="modal-title">{{ selectedNews.title }}</h1>
           </div>
@@ -592,13 +626,14 @@
 
 <script>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { newsService } from '../services/api.js'
 
 export default {
   name: 'Home',
   setup() {
     const route = useRoute()
+    const router = useRouter()
     const currentSlide = ref(0)
     const mobileMenuOpen = ref(false)
     const selectedNews = ref(null)
@@ -606,6 +641,10 @@ export default {
     const showPrivacyModal = ref(false)
     const showTermsModal = ref(false)
     const currentImageIndex = ref(0)
+    const loadingModalImages = ref(false)
+    
+    // Cache para noticias completas (mejora rendimiento)
+    const newsCache = new Map()
     const contactForm = ref({
       name: '',
       email: '',
@@ -624,19 +663,52 @@ export default {
 
     const loadNews = async () => {
       try {
-        // Cargar noticias más recientes
-        const latestResponse = await newsService.getLatest(6)
-        featuredNews.value = latestResponse.data || []
+        console.log('🔄 Home - Iniciando carga de noticias...')
+        const startTime = performance.now()
         
-        // Cargar noticias destacadas
-        const featuredResponse = await newsService.getFeatured()
+        // Cargar ambas solicitudes en paralelo para mejorar rendimiento
+        const [latestResponse, featuredResponse] = await Promise.all([
+          newsService.getLatest(6),
+          newsService.getFeatured()
+        ])
+        
+        featuredNews.value = latestResponse.data || []
         highlightedNews.value = featuredResponse.data || []
+        
+        // Preload de imágenes críticas del carrusel
+        preloadCriticalImages()
+        
+        const endTime = performance.now()
+        console.log('📰 Home - Noticias del carrusel cargadas:', featuredNews.value.length)
+        console.log('⭐ Home - Noticias destacadas cargadas:', highlightedNews.value.length)
+        console.log(`⏱️ Home - Tiempo total de carga: ${Math.round(endTime - startTime)}ms`)
         
       } catch (error) {
         console.error('Error cargando noticias:', error)
         // En caso de error, usar datos por defecto
         featuredNews.value = []
         highlightedNews.value = []
+      }
+    }
+
+    // Función para precargar imágenes críticas
+    const preloadCriticalImages = () => {
+      if (featuredNews.value.length > 0) {
+        // Precargar las primeras 3 imágenes del carrusel
+        const imagesToPreload = featuredNews.value.slice(0, 3)
+        
+        imagesToPreload.forEach((news, index) => {
+          if (news.image) {
+            const img = new Image()
+            img.src = getOptimizedImageUrl(news.image, 'large')
+            img.onload = () => {
+              console.log(`🖼️ Imagen ${index + 1} del carrusel precargada`)
+            }
+            img.onerror = () => {
+              console.warn(`⚠️ Error precargando imagen ${index + 1}`)
+            }
+          }
+        })
       }
     }
     
@@ -678,9 +750,8 @@ export default {
     }
 
     const openNewsModal = (news) => {
-      selectedNews.value = news
-      currentImageIndex.value = 0
-      document.body.style.overflow = 'hidden'
+      // Redirigir a la página de detalle de la noticia
+      router.push(`/noticias?news=${news.id}`)
     }
 
     const shareNews = (news) => {
@@ -729,6 +800,8 @@ export default {
       const images = []
       
       console.log('🔍 Home getNewsImages - datos de noticia:', news)
+      console.log('🔍 Home getNewsImages - ¿Tiene galería?', !!news?.gallery)
+      console.log('🔍 Home getNewsImages - Galería length:', news?.gallery?.length || 0)
       
       // Prioridad 1: Usar galería nueva si existe
       if (news.gallery && news.gallery.length > 0) {
@@ -743,19 +816,21 @@ export default {
         })
         
         sortedGallery.forEach((image, index) => {
-          const imageUrl = image.large_url || image.medium_url || image.thumbnail_url || image.optimized_url
+          // Usar las URLs de Cloudinary de la API Laravel
+          const imageUrl = image.cloudinary_secure_url || image.cloudinary_url || image.large_url || image.medium_url || image.thumbnail_url
           console.log(`🖼️ Home - Imagen ${index + 1}:`, {
             id: image.id,
             url: imageUrl,
+            cloudinary_secure_url: image.cloudinary_secure_url,
+            cloudinary_url: image.cloudinary_url,
             large_url: image.large_url,
             medium_url: image.medium_url,
-            thumbnail_url: image.thumbnail_url,
-            optimized_url: image.optimized_url
+            thumbnail_url: image.thumbnail_url
           })
           
           if (imageUrl) {
             images.push({
-              src: imageUrl,
+              src: imageUrl, // Usar la URL directamente de Cloudinary (ya está optimizada)
               alt: image.alt_text || news.title,
               caption: image.caption || (image.is_main ? 'Imagen principal' : `Imagen ${index + 1}`)
             })
@@ -771,7 +846,7 @@ export default {
       // Fallback: Imagen principal legacy
       if (news.image) {
         images.push({
-          src: news.image,
+          src: getOptimizedImageUrl(news.image, 'large'),
           alt: news.title,
           caption: 'Imagen principal'
         })
@@ -786,7 +861,7 @@ export default {
         imgElements.forEach((img, index) => {
           if (img.src !== news.image) { // Evitar duplicar la imagen principal
             images.push({
-              src: img.src,
+              src: getOptimizedImageUrl(img.src, 'large'),
               alt: img.alt || `Imagen ${index + 1}`,
               caption: img.alt || `Imagen ${index + 1}`
             })
@@ -843,6 +918,23 @@ export default {
       // Limpiar espacios en blanco excesivos
       cleanContent = cleanContent.replace(/\s*\n\s*\n\s*/g, '\n\n')
       cleanContent = cleanContent.trim()
+      
+      // NUEVO: Convertir saltos de línea en párrafos HTML
+      // Si el contenido no tiene etiquetas HTML, convertir los párrafos
+      if (!cleanContent.includes('<p>') && !cleanContent.includes('<br>')) {
+        // Dividir por dobles saltos de línea (párrafos)
+        const paragraphs = cleanContent.split(/\n\s*\n/)
+        
+        // Convertir cada párrafo en etiqueta <p> y saltos simples en <br>
+        cleanContent = paragraphs
+          .map(paragraph => {
+            // Convertir saltos de línea simples en <br>
+            const paragraphWithBreaks = paragraph.replace(/\n/g, '<br>')
+            return paragraphWithBreaks.trim() ? `<p>${paragraphWithBreaks.trim()}</p>` : ''
+          })
+          .filter(p => p !== '') // Eliminar párrafos vacíos
+          .join('')
+      }
       
       return cleanContent
     }
@@ -1021,6 +1113,73 @@ export default {
       return `https://www.facebook.com/plugins/video.php?height=314&href=${encodedUrl}&show_text=false&width=560&t=0`
     }
 
+    // Función para obtener URLs optimizadas de imágenes
+    const getOptimizedImageUrl = (imageUrl, size = 'medium') => {
+      if (!imageUrl) return ''
+      
+      // Si es una URL de Cloudinary, optimizar con transformaciones
+      if (imageUrl.includes('cloudinary.com')) {
+        // Extraer public_id y otras partes de la URL
+        const parts = imageUrl.split('/upload/')
+        if (parts.length === 2) {
+          const [baseUrl, pathWithId] = parts
+          
+          let transformations = []
+          
+          // Aplicar transformaciones según el tamaño
+          switch (size) {
+            case 'thumbnail':
+              transformations = ['w_400', 'h_300', 'c_fill', 'q_80', 'f_auto']
+              break
+            case 'medium':
+              transformations = ['w_800', 'h_600', 'c_fill', 'q_85', 'f_auto']
+              break
+            case 'large':
+              transformations = ['w_1200', 'h_900', 'c_fill', 'q_90', 'f_auto']
+              break
+            default:
+              transformations = ['w_800', 'h_600', 'c_fill', 'q_85', 'f_auto']
+          }
+          
+          return `${baseUrl}/upload/${transformations.join(',')}/${pathWithId}`
+        }
+        return imageUrl
+      }
+      
+      // Si es una URL local, agregar parámetros de optimización
+      if (imageUrl.includes('localhost:8000') || imageUrl.includes('api/v1/news')) {
+        const baseUrl = imageUrl.split('?')[0]
+        const params = new URLSearchParams()
+        
+        switch (size) {
+          case 'thumbnail':
+            params.set('width', '400')
+            params.set('height', '300')
+            params.set('quality', '80')
+            break
+          case 'medium':
+            params.set('width', '800')
+            params.set('height', '600')
+            params.set('quality', '85')
+            break
+          case 'large':
+            params.set('width', '1200')
+            params.set('height', '900')
+            params.set('quality', '90')
+            break
+          default:
+            params.set('width', '800')
+            params.set('height', '600')
+            params.set('quality', '85')
+        }
+        
+        return `${baseUrl}?${params.toString()}`
+      }
+      
+      // Si es una URL base64 o otra, devolver tal como está
+      return imageUrl
+    }
+
     // Sistema de tema automático día/noche
     const setThemeBasedOnTime = () => {
       const hour = new Date().getHours()
@@ -1140,6 +1299,7 @@ export default {
       showPrivacyModal,
       showTermsModal,
       currentImageIndex,
+      loadingModalImages,
       contactForm,
       featuredNews,
       highlightedNews,
@@ -1170,7 +1330,8 @@ export default {
       getVideoType,
       getYouTubeEmbedUrl,
       getVimeoEmbedUrl,
-      getFacebookEmbedUrl
+      getFacebookEmbedUrl,
+      getOptimizedImageUrl
     }
   }
 }
@@ -1375,6 +1536,29 @@ export default {
   padding: 3rem 0;
   color: white;
   z-index: 2;
+}
+
+.slide-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.slide-date {
+  background: rgba(244, 119, 33, 0.9);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.slide-category {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  font-weight: 500;
 }
 
 .slide-title {
@@ -1778,9 +1962,12 @@ export default {
 /* Modal Hero Section with Carousel */
 .modal-hero {
   position: relative;
-  height: 400px;
+  height: 400px; /* Aumentado para mejor visibilidad */
   overflow: hidden;
   flex-shrink: 0;
+  max-width: 100%; /* Ocupar todo el ancho disponible */
+  margin: 0 auto; /* Centrar el contenedor */
+  background: #f0f0f0; /* Fondo temporal para debugging */
 }
 
 .hero-carousel-container {
@@ -1789,6 +1976,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
+  z-index: 1; /* Asegurar que esté por encima del fondo */
 }
 
 .hero-carousel-slide {
@@ -1808,8 +1996,11 @@ export default {
 .hero-carousel-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* Volver a 'cover' para llenar el espacio */
+  object-position: center; /* Centrar la imagen */
   transition: transform 0.3s ease;
+  z-index: 1; /* Asegurar visibilidad */
+  display: block; /* Asegurar que se muestre */
 }
 
 .hero-overlay {
@@ -1824,6 +2015,8 @@ export default {
     rgba(0, 0, 0, 0.3) 50%,
     rgba(0, 0, 0, 0.8) 100%
   );
+  z-index: 2; /* Por encima de la imagen pero debajo del contenido */
+  pointer-events: none; /* No interferir con clics */
 }
 
 /* Carousel Controls */
@@ -1835,7 +2028,7 @@ export default {
   display: flex;
   justify-content: space-between;
   padding: 0 1.5rem;
-  z-index: 3;
+  z-index: 5; /* Asegurar que estén por encima de las imágenes */
   transform: translateY(-50%);
 }
 
@@ -1859,6 +2052,35 @@ export default {
 .hero-carousel-btn:hover {
   background: rgba(244, 119, 33, 0.9);
   transform: scale(1.1);
+}
+
+/* Loading overlay para modal */
+.loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Carousel Indicators */
@@ -1922,7 +2144,8 @@ export default {
   left: 0;
   right: 0;
   padding: 2rem;
-  z-index: 2;
+  z-index: 10; /* Asegurar que esté por encima de todo */
+  pointer-events: auto; /* Permitir interacción */
 }
 
 .modal-meta-badges {
@@ -2044,10 +2267,13 @@ export default {
   font-size: 1.125rem;
   line-height: 1.8;
   color: var(--text-secondary);
+  white-space: pre-wrap; /* Preserva espacios y saltos de línea */
+  word-wrap: break-word; /* Permite quebrar palabras largas */
 }
 
 .modal-content-text p {
   margin-bottom: 1.5rem;
+  white-space: pre-wrap; /* Preserva formato de párrafos */
 }
 
 .modal-content-text p:first-child {
@@ -2065,11 +2291,13 @@ export default {
 .modal-content-text ol {
   margin: 1.5rem 0;
   padding-left: 2rem;
+  white-space: normal; /* Listas con formato normal */
 }
 
 .modal-content-text li {
   margin-bottom: 0.75rem;
   position: relative;
+  white-space: pre-wrap; /* Preserva formato en listas */
 }
 
 .modal-content-text ul li::marker {
@@ -2079,6 +2307,45 @@ export default {
 .modal-content-text ol li::marker {
   color: var(--primary-color);
   font-weight: bold;
+}
+
+/* Estilos adicionales para preservar formato */
+.modal-content-text h1,
+.modal-content-text h2,
+.modal-content-text h3,
+.modal-content-text h4,
+.modal-content-text h5,
+.modal-content-text h6 {
+  margin: 1.5rem 0 1rem 0;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.modal-content-text blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-accent);
+  border-left: 4px solid var(--primary-color);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.modal-content-text pre {
+  background-color: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  overflow-x: auto;
+  white-space: pre;
+  font-family: 'Courier New', monospace;
+}
+
+.modal-content-text code {
+  background-color: var(--bg-secondary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
 }
 
 /* Modern News Gallery Styles */
@@ -2173,8 +2440,9 @@ export default {
   }
   
   .modal-hero {
-    height: 280px;
+    height: 200px; /* Reducido de 280px a 200px */
   }
+  
   
   .hero-carousel-btn {
     width: 40px !important;

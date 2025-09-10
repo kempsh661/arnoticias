@@ -157,22 +157,31 @@
                 <div class="col-category">{{ news.category }}</div>
                 <div class="col-date">{{ formatDate(news.published_at) }}</div>
                 <div class="col-status">
-                  <span v-if="news.publication_status === 'published'" class="status-badge published">
-                    <span class="status-icon">✅</span>
-                    Publicada
-                  </span>
-                  <span v-else-if="news.publication_status === 'unpublished'" class="status-badge unpublished">
-                    <span class="status-icon">👁️‍🗨️</span>
-                    Despublicada
-                    <span v-if="news.days_until_deletion !== null" class="deletion-countdown">
-                      ({{ news.days_until_deletion }} días)
-                    </span>
-                  </span>
-                  <span v-else class="status-badge draft">
-                    <span class="status-icon">📝</span>
-                    Borrador
-                  </span>
-                  <span v-if="news.featured" class="featured-badge">⭐ Destacada</span>
+                  <div class="status-container">
+                    <!-- Estado de publicación -->
+                    <div class="status-row">
+                      <span v-if="news.publication_status === 'published'" class="status-badge published">
+                        <span class="status-icon">✅</span>
+                        Publicada
+                      </span>
+                      <span v-else-if="news.publication_status === 'unpublished'" class="status-badge unpublished">
+                        <span class="status-icon">👁️‍🗨️</span>
+                        Despublicada
+                        <span v-if="news.days_until_deletion !== null" class="deletion-countdown">
+                          ({{ news.days_until_deletion }} días)
+                        </span>
+                      </span>
+                      <span v-else class="status-badge draft">
+                        <span class="status-icon">📝</span>
+                        Borrador
+                      </span>
+                    </div>
+                    
+                    <!-- Etiqueta destacada (si aplica) -->
+                    <div v-if="news.featured" class="featured-row">
+                      <span class="featured-badge">⭐ Destacada</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="col-actions">
                   <button @click="previewNews(news)" class="action-btn preview" title="Previsualizar">👁️</button>
@@ -388,7 +397,39 @@
             </div>
           </div>
           
+          <!-- Debug temporal para ver qué está pasando -->
+          <div style="background: #f0f0f0; padding: 15px; margin: 15px 0; border-radius: 8px; border: 2px solid #007bff;">
+            <h4 style="margin: 0 0 10px 0; color: #007bff;">🔍 DEBUG - Vista Previa</h4>
+            <div style="font-size: 14px; line-height: 1.4;">
+              <strong>Datos de la noticia:</strong><br>
+              • Título: {{ previewNewsData?.title || 'NO HAY TÍTULO' }}<br>
+              • Contenido existe: {{ !!previewNewsData?.content }}<br>
+              • Longitud del contenido: {{ previewNewsData?.content?.length || 0 }} caracteres<br>
+              • Etiquetas: {{ previewNewsData?.tags ? previewNewsData.tags.length : 'NO HAY ETIQUETAS' }}<br>
+              • Categoría: {{ previewNewsData?.category || 'NO HAY CATEGORÍA' }}<br>
+              <br>
+              <strong>Contenido limpio:</strong><br>
+              <div style="background: white; padding: 10px; border-radius: 4px; margin-top: 5px; max-height: 100px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                {{ getCleanContent(previewNewsData) || 'NO HAY CONTENIDO LIMPIO' }}
+              </div>
+            </div>
+          </div>
+          
           <div class="modal-content-text" v-html="getCleanContent(previewNewsData)"></div>
+          
+          <!-- Tags Section -->
+          <div v-if="previewNewsData.tags && previewNewsData.tags.length > 0" class="modal-tags-section">
+            <h4>Etiquetas:</h4>
+            <div class="tags-list">
+              <span 
+                v-for="tag in previewNewsData.tags" 
+                :key="tag" 
+                class="tag-item"
+              >
+                {{ tag }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -511,9 +552,28 @@ export default {
       }
     }
 
-    const editNews = (id) => {
-      editingNews.value = news.value.find(item => item.id === id)
-      showCreateForm.value = true
+    const editNews = async (id) => {
+      try {
+        loading.value = true
+        
+        // Obtener los datos completos de la noticia desde la API
+        console.log('📝 Cargando noticia completa para editar:', id)
+        const response = await newsService.getById(id)
+        
+        if (response.success) {
+          editingNews.value = response.data
+          showCreateForm.value = true
+          console.log('✅ Noticia cargada para edición:', response.data.title)
+        } else {
+          console.error('❌ Error al cargar noticia:', response.message)
+          alert('Error al cargar la noticia para edición')
+        }
+      } catch (error) {
+        console.error('❌ Error al cargar noticia para edición:', error)
+        alert('Error al cargar la noticia para edición')
+      } finally {
+        loading.value = false
+      }
     }
 
     const deleteNews = async (id) => {
@@ -836,10 +896,30 @@ export default {
     }
 
     // Funciones para previsualización (copiadas de Home.vue)
-    const previewNews = (news) => {
+    const previewNews = async (news) => {
+      console.log('🔍 AdminDashboard - previewNews llamado con:', news)
+      console.log('🔍 AdminDashboard - Contenido de la noticia:', news.content)
+      console.log('🔍 AdminDashboard - Etiquetas de la noticia:', news.tags)
+      
+      // Mostrar modal inmediatamente con datos básicos
       previewNewsData.value = news
       currentImageIndex.value = 0
       document.body.style.overflow = 'hidden'
+      
+      try {
+        // Cargar datos completos de la API
+        console.log('📡 AdminDashboard - Cargando datos completos de la noticia...')
+        const response = await newsService.getById(news.id)
+        console.log('✅ AdminDashboard - Datos completos cargados:', response.data)
+        
+        // Actualizar con datos completos
+        previewNewsData.value = response.data
+        console.log('✅ AdminDashboard - Vista previa actualizada con datos completos')
+        
+      } catch (error) {
+        console.error('❌ AdminDashboard - Error cargando datos completos:', error)
+        // Mantener datos básicos si hay error
+      }
     }
 
     const closePreview = () => {
@@ -867,14 +947,14 @@ export default {
         })
         
         sortedGallery.forEach((image, index) => {
-          const imageUrl = image.large_url || image.medium_url || image.thumbnail_url || image.optimized_url
+          const imageUrl = image.optimized_url || image.large_url || image.medium_url || image.thumbnail_url
           
           // Log detallado para ver las URLs reales
           console.log(`🖼️ Imagen ${index + 1} (ID: ${image.id}):`)
+          console.log('  - optimized_url:', image.optimized_url)
           console.log('  - large_url:', image.large_url)
           console.log('  - medium_url:', image.medium_url)
           console.log('  - thumbnail_url:', image.thumbnail_url)
-          console.log('  - optimized_url:', image.optimized_url)
           console.log('  - URL seleccionada:', imageUrl)
           console.log('  - is_main:', image.is_main)
           
@@ -1518,6 +1598,47 @@ export default {
   border: 1px solid #fc8181;
 }
 
+/* Estilos para la nueva estructura organizada de estado */
+.status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.featured-row {
+  display: flex;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.featured-badge {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #92400e;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.featured-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(251, 191, 36, 0.4);
+}
+
 .deletion-countdown {
   font-size: 0.7rem;
   font-weight: 700;
@@ -1959,11 +2080,21 @@ export default {
 .modal-content-text {
   font-size: 1.125rem;
   line-height: 1.8;
-  color: #333;
+  color: #333 !important; /* Forzar color */
+  white-space: pre-wrap; /* Preserva espacios y saltos de línea */
+  word-wrap: break-word; /* Permite quebrar palabras largas */
+  display: block !important; /* Forzar display */
+  visibility: visible !important; /* Forzar visibilidad */
+  opacity: 1 !important; /* Forzar opacidad */
+  background: transparent !important; /* Sin fondo */
+  padding: 20px !important; /* Padding para asegurar espacio */
+  margin: 0 !important; /* Sin margen */
+  border: 2px solid #007bff !important; /* Borde temporal para debug */
 }
 
 .modal-content-text p {
   margin-bottom: 1.5rem;
+  white-space: pre-wrap; /* Preserva formato de párrafos */
 }
 
 .modal-content-text p:first-child {
@@ -1981,11 +2112,13 @@ export default {
 .modal-content-text ol {
   margin: 1.5rem 0;
   padding-left: 2rem;
+  white-space: normal; /* Listas con formato normal */
 }
 
 .modal-content-text li {
   margin-bottom: 0.75rem;
   position: relative;
+  white-space: pre-wrap; /* Preserva formato en listas */
 }
 
 .modal-content-text ul li::marker {
@@ -1995,6 +2128,91 @@ export default {
 .modal-content-text ol li::marker {
   color: #667eea;
   font-weight: bold;
+}
+
+/* Estilos adicionales para preservar formato */
+.modal-content-text h1,
+.modal-content-text h2,
+.modal-content-text h3,
+.modal-content-text h4,
+.modal-content-text h5,
+.modal-content-text h6 {
+  margin: 1.5rem 0 1rem 0;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.modal-content-text blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-left: 4px solid #667eea;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.modal-content-text pre {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  white-space: pre;
+  font-family: 'Courier New', monospace;
+}
+
+.modal-content-text code {
+  background-color: #f8f9fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+/* Tags Section Styling */
+.modal-tags-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #007bff; /* Borde más visible para debug */
+  background: #f8f9fa; /* Fondo para debug */
+  padding: 20px; /* Más padding */
+  border-radius: 8px; /* Bordes redondeados */
+}
+
+.modal-tags-section h4 {
+  margin-bottom: 1rem;
+  color: #333 !important; /* Forzar color */
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: block !important; /* Forzar display */
+}
+
+.tags-list {
+  display: flex !important; /* Forzar display */
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  background: white; /* Fondo blanco para las etiquetas */
+  padding: 10px; /* Padding interno */
+  border-radius: 4px; /* Bordes redondeados */
+}
+
+.tag-item {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; /* Forzar fondo */
+  color: white !important; /* Forzar color */
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+  display: inline-block !important; /* Forzar display */
+  margin: 2px; /* Margen entre etiquetas */
+}
+
+.tag-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
 }
 </style>
 

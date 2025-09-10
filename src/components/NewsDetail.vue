@@ -43,12 +43,12 @@
 
           <div class="article-content">
             <div class="article-image" v-if="news.image">
-              <img :src="news.image" :alt="news.title">
+              <img :src="getOptimizedImageUrl(news.image, 'large')" :alt="news.title">
               <p class="image-caption" v-if="news.imageCaption">{{ news.imageCaption }}</p>
             </div>
 
             <div class="article-video" v-if="news.video">
-              <video controls :poster="news.image">
+              <video controls :poster="getOptimizedImageUrl(news.image, 'large')">
                 <source :src="news.video" type="video/mp4">
                 Tu navegador no soporta el elemento video.
               </video>
@@ -91,7 +91,7 @@
               class="related-card"
               @click="goToNews(relatedItem.id)"
             >
-              <img :src="relatedItem.image" :alt="relatedItem.title" class="related-image">
+              <img :src="getOptimizedImageUrl(relatedItem.image, 'medium')" :alt="relatedItem.title" class="related-image">
               <div class="related-content">
                 <h3 class="related-title">{{ relatedItem.title }}</h3>
                 <p class="related-excerpt">{{ relatedItem.excerpt }}</p>
@@ -183,6 +183,49 @@ export default {
       router.push(`/noticia/${newsId}`)
     }
 
+    // Función para obtener URLs optimizadas de imágenes
+    const getOptimizedImageUrl = (imageUrl, size = 'medium') => {
+      if (!imageUrl) return ''
+      
+      // Si es una URL de Cloudinary, usar la URL directamente
+      if (imageUrl.includes('cloudinary.com')) {
+        return imageUrl
+      }
+      
+      // Si es una URL local, agregar parámetros de optimización
+      if (imageUrl.includes('localhost:8000') || imageUrl.includes('api/v1/news')) {
+        const baseUrl = imageUrl.split('?')[0]
+        const params = new URLSearchParams()
+        
+        switch (size) {
+          case 'thumbnail':
+            params.set('width', '400')
+            params.set('height', '300')
+            params.set('quality', '80')
+            break
+          case 'medium':
+            params.set('width', '800')
+            params.set('height', '600')
+            params.set('quality', '85')
+            break
+          case 'large':
+            params.set('width', '1200')
+            params.set('height', '900')
+            params.set('quality', '90')
+            break
+          default:
+            params.set('width', '800')
+            params.set('height', '600')
+            params.set('quality', '85')
+        }
+        
+        return `${baseUrl}?${params.toString()}`
+      }
+      
+      // Si es una URL base64 o otra, devolver tal como está
+      return imageUrl
+    }
+
     // Sistema de tema (mismo que Home.vue)
     const setThemeBasedOnTime = () => {
       const hour = new Date().getHours()
@@ -224,7 +267,8 @@ export default {
       news,
       relatedNews,
       formatDate,
-      goToNews
+      goToNews,
+      getOptimizedImageUrl
     }
   }
 }
@@ -418,20 +462,64 @@ export default {
   font-size: 1.125rem;
   line-height: 1.7;
   color: var(--text-primary);
+  white-space: pre-wrap; /* Preserva espacios y saltos de línea */
+  word-wrap: break-word; /* Permite quebrar palabras largas */
 }
 
 .article-text p {
   margin-bottom: 1.5rem;
+  white-space: pre-wrap; /* Preserva formato de párrafos */
 }
 
 .article-text ul,
 .article-text ol {
   margin-bottom: 1.5rem;
   padding-left: 2rem;
+  white-space: normal; /* Listas con formato normal */
 }
 
 .article-text li {
   margin-bottom: 0.5rem;
+  white-space: pre-wrap; /* Preserva formato en listas */
+}
+
+/* Estilos adicionales para preservar formato */
+.article-text h1,
+.article-text h2,
+.article-text h3,
+.article-text h4,
+.article-text h5,
+.article-text h6 {
+  margin: 1.5rem 0 1rem 0;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.article-text blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-accent);
+  border-left: 4px solid var(--primary-color);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.article-text pre {
+  background-color: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  overflow-x: auto;
+  white-space: pre;
+  font-family: 'Courier New', monospace;
+}
+
+.article-text code {
+  background-color: var(--bg-secondary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
 }
 
 .article-tags {
