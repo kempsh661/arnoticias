@@ -101,19 +101,27 @@
             <article 
               v-for="news in highlightedNews" 
               :key="news.id"
+              :data-news-id="news.id"
               class="news-card card"
             >
-              <img 
-                :src="getOptimizedImageUrl(news.image, 'medium')" 
-                :alt="news.title" 
-                class="card-image" 
-                loading="lazy"
-                decoding="async"
-                @click="openNewsModal(news)"
-              >
+              <div class="card-image-container">
+                <img 
+                  :src="getOptimizedImageUrl(news.image, 'medium')" 
+                  :alt="news.title" 
+                  class="card-image" 
+                  loading="lazy"
+                  decoding="async"
+                  @load="onImageLoad"
+                  @error="onImageError"
+                  @click="openNewsModal(news)"
+                >
+                <div class="image-loading" v-if="!imageLoaded[news.id]">
+                  <div class="loading-spinner"></div>
+                </div>
+              </div>
               <div class="card-content">
                 <h3 class="card-title" @click="openNewsModal(news)">{{ news.title }}</h3>
-                <p class="card-excerpt">{{ news.excerpt }}</p>
+                <p class="card-excerpt">{{ news.excerpt || news.content?.substring(0, 150) + '...' || 'Sin descripción disponible' }}</p>
                 <div class="card-meta">
                   <span>{{ formatDate(news.published_at || news.date) }}</span>
                   <span>{{ news.category }}</span>
@@ -642,6 +650,7 @@ export default {
     const showTermsModal = ref(false)
     const currentImageIndex = ref(0)
     const loadingModalImages = ref(false)
+    const imageLoaded = ref({})
     
     // Cache para noticias completas (mejora rendimiento)
     const newsCache = new Map()
@@ -1113,6 +1122,22 @@ export default {
       return `https://www.facebook.com/plugins/video.php?height=314&href=${encodedUrl}&show_text=false&width=560&t=0`
     }
 
+    // Funciones para manejar carga de imágenes
+    const onImageLoad = (event) => {
+      const newsId = event.target.closest('.news-card')?.getAttribute('data-news-id')
+      if (newsId) {
+        imageLoaded.value[newsId] = true
+      }
+    }
+
+    const onImageError = (event) => {
+      const newsId = event.target.closest('.news-card')?.getAttribute('data-news-id')
+      if (newsId) {
+        imageLoaded.value[newsId] = true // Marcar como cargado para ocultar el spinner
+        console.warn(`Error cargando imagen para noticia ${newsId}`)
+      }
+    }
+
     // Función para obtener URLs optimizadas de imágenes
     const getOptimizedImageUrl = (imageUrl, size = 'medium') => {
       if (!imageUrl) return ''
@@ -1331,7 +1356,10 @@ export default {
       getYouTubeEmbedUrl,
       getVimeoEmbedUrl,
       getFacebookEmbedUrl,
-      getOptimizedImageUrl
+      getOptimizedImageUrl,
+      onImageLoad,
+      onImageError,
+      imageLoaded
     }
   }
 }
@@ -1648,6 +1676,51 @@ export default {
 
 .news-card .card-title {
   flex: 1;
+}
+
+.card-image-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.news-card:hover .card-image {
+  transform: scale(1.05);
+}
+
+.image-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--card-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* About Section Styles */
