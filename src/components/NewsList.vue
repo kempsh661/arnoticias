@@ -79,7 +79,7 @@
             >
               <div class="card-image-container" @click="openNewsModal(news)">
                 <img 
-                  :src="getOptimizedImageUrl(news.thumbnail_url || news.optimized_image_url || news.image, 'medium')" 
+                  :src="getOptimizedImageUrl(news.image_url || news.thumbnail_url || news.optimized_image_url || news.image, 'medium')" 
                   :alt="news.title" 
                   class="card-image"
                   loading="lazy"
@@ -236,7 +236,7 @@
             <video 
               v-else-if="getVideoType(selectedNews.video) === 'direct'"
               controls 
-              :poster="getOptimizedImageUrl(selectedNews.medium_url || selectedNews.optimized_image_url || selectedNews.image, 'large')" 
+              :poster="getOptimizedImageUrl(selectedNews.image_url || selectedNews.medium_url || selectedNews.optimized_image_url || selectedNews.image, 'large')" 
               class="modal-video"
             >
               <source :src="selectedNews.video" type="video/mp4">
@@ -580,9 +580,9 @@ export default {
       }
       
       // Fallback: Imagen principal legacy
-      if (news.image) {
+      if (news.image_url || news.image) {
         images.push({
-          src: getOptimizedImageUrl(news.image, 'large'),
+          src: getOptimizedImageUrl(news.image_url || news.image, 'large'),
           alt: news.title,
           caption: 'Imagen principal'
         })

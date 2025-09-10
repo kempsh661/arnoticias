@@ -42,13 +42,13 @@
           </header>
 
           <div class="article-content">
-            <div class="article-image" v-if="news.image">
-              <img :src="getOptimizedImageUrl(news.image, 'large')" :alt="news.title">
+            <div class="article-image" v-if="news.image_url || news.image">
+              <img :src="getOptimizedImageUrl(news.image_url || news.image, 'large')" :alt="news.title">
               <p class="image-caption" v-if="news.imageCaption">{{ news.imageCaption }}</p>
             </div>
 
             <div class="article-video" v-if="news.video">
-              <video controls :poster="getOptimizedImageUrl(news.image, 'large')">
+              <video controls :poster="getOptimizedImageUrl(news.image_url || news.image, 'large')">
                 <source :src="news.video" type="video/mp4">
                 Tu navegador no soporta el elemento video.
               </video>
@@ -91,7 +91,7 @@
               class="related-card"
               @click="goToNews(relatedItem.id)"
             >
-              <img :src="getOptimizedImageUrl(relatedItem.image, 'medium')" :alt="relatedItem.title" class="related-image">
+              <img :src="getOptimizedImageUrl(relatedItem.image_url || relatedItem.image, 'medium')" :alt="relatedItem.title" class="related-image">
               <div class="related-content">
                 <h3 class="related-title">{{ relatedItem.title }}</h3>
                 <p class="related-excerpt">{{ relatedItem.excerpt }}</p>

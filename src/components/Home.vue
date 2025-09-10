@@ -47,7 +47,7 @@
             >
               <div class="slide-image">
                 <img 
-                :src="getOptimizedImageUrl(news.image, 'large')" 
+                :src="getOptimizedImageUrl(news.image_url || news.image, 'large')" 
                 :alt="news.title" 
                 loading="eager"
                 decoding="async"
@@ -106,7 +106,7 @@
             >
               <div class="card-image-container">
                 <img 
-                  :src="getOptimizedImageUrl(news.image, 'medium')" 
+                  :src="getOptimizedImageUrl(news.image_url || news.image, 'medium')" 
                   :alt="news.title" 
                   class="card-image" 
                   loading="lazy"
@@ -707,9 +707,9 @@ export default {
         const imagesToPreload = featuredNews.value.slice(0, 3)
         
         imagesToPreload.forEach((news, index) => {
-          if (news.image) {
+          if (news.image_url || news.image) {
             const img = new Image()
-            img.src = getOptimizedImageUrl(news.image, 'large')
+            img.src = getOptimizedImageUrl(news.image_url || news.image, 'large')
             img.onload = () => {
               console.log(`🖼️ Imagen ${index + 1} del carrusel precargada`)
             }
@@ -853,9 +853,9 @@ export default {
       }
       
       // Fallback: Imagen principal legacy
-      if (news.image) {
+      if (news.image_url || news.image) {
         images.push({
-          src: getOptimizedImageUrl(news.image, 'large'),
+          src: getOptimizedImageUrl(news.image_url || news.image, 'large'),
           alt: news.title,
           caption: 'Imagen principal'
         })
