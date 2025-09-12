@@ -25,7 +25,7 @@ app.get('/noticia/:id', (req, res) => {
 });
 
 // Todas las demás rutas sirven la SPA
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
