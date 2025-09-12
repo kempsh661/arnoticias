@@ -421,19 +421,46 @@ export default {
         
         const loadTime = performance.now() - startTime
         console.log(`⚡ [NewsList] API cargada en ${loadTime.toFixed(2)}ms`)
+        console.log('🔍 [NewsList] Full API response:', response)
+        console.log('🔍 [NewsList] Response data:', response.data)
         
-        const newNews = response.data || []
+        // La API puede devolver los datos en response.data.data o response.data directamente
+        const newNews = response.data?.data || response.data || []
+        
+        let hasUniqueNews = true
         
         if (append) {
           console.log('📝 [NewsList] Appending news. Before:', allNews.value.length, 'New:', newNews.length)
-          allNews.value = [...allNews.value, ...newNews]
-          console.log('📝 [NewsList] After append:', allNews.value.length)
+          
+          // Verificar que no haya duplicados por ID
+          const existingIds = new Set(allNews.value.map(news => news.id))
+          const uniqueNewNews = newNews.filter(news => !existingIds.has(news.id))
+          
+          console.log('📝 [NewsList] Unique new news after filtering:', uniqueNewNews.length)
+          
+          if (uniqueNewNews.length > 0) {
+            allNews.value = [...allNews.value, ...uniqueNewNews]
+            console.log('📝 [NewsList] After append:', allNews.value.length)
+          } else {
+            console.log('⚠️ [NewsList] No new unique news to append, disabling load more')
+            hasMoreNews.value = false
+            hasUniqueNews = false
+          }
         } else {
           allNews.value = newNews
         }
         
-        // Verificar si hay más páginas
-        hasMoreNews.value = newNews.length === 6
+        // Verificar si hay más páginas (solo si no se modificó en el bloque de append)
+        if (append && !hasUniqueNews) {
+          // hasMoreNews ya se estableció en false en el bloque de append
+          console.log('📊 [NewsList] hasMoreNews set to false due to no unique news')
+        } else {
+          // Si recibimos menos de 6 noticias, no hay más páginas
+          // Si recibimos exactamente 6, puede que haya más páginas
+          hasMoreNews.value = newNews.length === 6
+          console.log('📊 [NewsList] Pagination check - newNews.length:', newNews.length, 'hasMoreNews:', hasMoreNews.value)
+        }
+        
         currentPage.value = page
         
         console.log('✅ [NewsList] Noticias cargadas:', allNews.value.length, 'total')
