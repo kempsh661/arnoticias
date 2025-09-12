@@ -128,6 +128,15 @@
               📰 Cargar Más Noticias
             </button>
           </div>
+          
+          <!-- Debug info -->
+          <div class="debug-info" style="margin-top: 1rem; padding: 1rem; background: #f0f0f0; border-radius: 8px; font-size: 0.9rem;">
+            <p><strong>Debug Info:</strong></p>
+            <p>hasMoreNews: {{ hasMoreNews }}</p>
+            <p>isLoading: {{ isLoading }}</p>
+            <p>currentPage: {{ currentPage }}</p>
+            <p>Total news: {{ allNews.length }}</p>
+          </div>
         </div>
       </section>
     </main>
@@ -513,12 +522,14 @@ export default {
       console.log('📊 [NewsList] hasMoreNews:', hasMoreNews.value)
       console.log('📊 [NewsList] isLoading:', isLoading.value)
       console.log('📊 [NewsList] currentPage:', currentPage.value)
+      console.log('📊 [NewsList] allNews.length:', allNews.value.length)
       
       if (hasMoreNews.value && !isLoading.value) {
         console.log('✅ [NewsList] Loading more news, page:', currentPage.value + 1)
         loadNews(currentPage.value + 1, true)
       } else {
         console.log('❌ [NewsList] Cannot load more news - hasMoreNews:', hasMoreNews.value, 'isLoading:', isLoading.value)
+        alert(`Debug: hasMoreNews=${hasMoreNews.value}, isLoading=${isLoading.value}`)
       }
     }
 
