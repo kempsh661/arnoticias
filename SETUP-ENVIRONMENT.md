@@ -113,3 +113,4 @@ Para actualizar el entorno:
 1. Actualiza las variables en `.env`
 2. Reinicia el servidor de desarrollo
 3. Verifica que todo funcione correctamente
+

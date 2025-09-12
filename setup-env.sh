@@ -42,3 +42,4 @@ echo ""
 echo "📚 Para más información, lee: SETUP-ENVIRONMENT.md"
 echo ""
 echo "🎉 ¡Listo para desarrollar!"
+

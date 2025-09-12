@@ -1,5 +1,14 @@
 <template>
   <div class="news-detail">
+    <!-- Meta tags dinámicos para SEO y redes sociales -->
+    <MetaTags
+      :title="metaTitle"
+      :description="metaDescription"
+      :image="metaImage"
+      :url="metaUrl"
+      type="article"
+    />
+    
     <header class="header">
       <div class="container">
         <div class="header-content">
@@ -24,7 +33,7 @@
 
     <main class="main-content">
       <div class="container">
-        <article class="article" v-if="news">
+        <article class="article" v-if="news && !isLoading">
           <header class="article-header">
             <div class="breadcrumb">
               <router-link to="/">Inicio</router-link>
@@ -42,9 +51,50 @@
           </header>
 
           <div class="article-content">
-            <div class="article-image" v-if="news.image_url || news.image">
-              <img :src="getOptimizedImageUrl(news.image_url || news.image, 'large')" :alt="news.title">
-              <p class="image-caption" v-if="news.imageCaption">{{ news.imageCaption }}</p>
+            <!-- Image Gallery/Carousel -->
+            <div class="article-image-gallery" v-if="getNewsImages(news).length > 0">
+              <div class="gallery-container">
+                <div 
+                  v-for="(image, index) in getNewsImages(news)" 
+                  :key="index"
+                  class="gallery-slide"
+                  :class="{ active: currentImageIndex === index }"
+                >
+                  <img 
+                    :src="image.src" 
+                    :alt="image.alt" 
+                    class="gallery-image"
+                    :loading="index === 0 ? 'eager' : 'lazy'"
+                    :decoding="index === 0 ? 'sync' : 'async'"
+                  >
+                  <div class="gallery-overlay"></div>
+                </div>
+                
+                <!-- Gallery Controls -->
+                <div v-if="getNewsImages(news).length > 1" class="gallery-controls">
+                  <button @click="prevImage" class="gallery-btn gallery-prev">‹</button>
+                  <button @click="nextImage" class="gallery-btn gallery-next">›</button>
+                </div>
+                
+                <!-- Gallery Indicators -->
+                <div v-if="getNewsImages(news).length > 1" class="gallery-indicators">
+                  <button 
+                    v-for="(image, index) in getNewsImages(news)" 
+                    :key="index"
+                    @click="goToImage(index)"
+                    class="gallery-indicator"
+                    :class="{ active: currentImageIndex === index }"
+                  ></button>
+                </div>
+                
+                <!-- Image Caption -->
+                <div class="gallery-caption">
+                  {{ getNewsImages(news)[currentImageIndex]?.caption }}
+                  <span v-if="getNewsImages(news).length > 1" class="image-counter">
+                    {{ currentImageIndex + 1 }} / {{ getNewsImages(news).length }}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div class="article-video" v-if="news.video">
@@ -77,8 +127,39 @@
           </div>
         </article>
 
-        <div v-else class="loading">
-          <p>Cargando noticia...</p>
+        <div v-else-if="isLoading" class="loading">
+          <!-- Skeleton Loading -->
+          <div class="skeleton-container">
+            <div class="skeleton-header">
+              <div class="skeleton-breadcrumb"></div>
+              <div class="skeleton-title"></div>
+              <div class="skeleton-meta">
+                <div class="skeleton-meta-item"></div>
+                <div class="skeleton-meta-item"></div>
+                <div class="skeleton-meta-item"></div>
+              </div>
+            </div>
+            
+            <div class="skeleton-content">
+              <div class="skeleton-image"></div>
+              <div class="skeleton-text">
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
+              </div>
+              <div class="skeleton-text">
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div v-else class="error-state">
+          <p>No se pudo cargar la noticia.</p>
+          <router-link to="/" class="btn btn-primary">Volver al inicio</router-link>
         </div>
 
         <!-- Related News Section -->
@@ -123,18 +204,147 @@
             <h4>Enlaces</h4>
             <ul class="footer-links">
               <li><router-link to="/">Inicio</router-link></li>
-              <li><a href="/#noticias">Noticias</a></li>
               <li><a href="/#destacadas">Destacadas</a></li>
+              <li><router-link to="/noticias">Noticias</router-link></li>
               <li><a href="/#nosotros">Nosotros</a></li>
+              <li><a href="/#contacto">Contacto</a></li>
             </ul>
+          </div>
+          
+          <div class="footer-section">
+            <h4>Contacto</h4>
+            <ul class="footer-contact">
+              <li>📧 Araucanoticias2019@gmail.com</li>
+              <li>📱 +57 310 2279487</li>
+              <li>📍 Arauca, Colombia</li>
+            </ul>
+          </div>
+          
+          <div class="footer-section">
+            <h4>Síguenos</h4>
+            <div class="social-links">
+              <a href="https://www.facebook.com/arauca.noticia" target="_blank" rel="noopener noreferrer" class="social-link facebook-link">
+                <svg class="social-logo" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                Facebook
+              </a>
+              <a href="https://www.instagram.com/arauca_noticias20?igsh=OHVuemY2dXhnaGpr" target="_blank" rel="noopener noreferrer" class="social-link instagram-link">
+                <svg class="social-logo" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.79 0-1.5.61-1.5 1.5s.71 1.5 1.5 1.5 1.5-.61 1.5-1.5-.71-1.5-1.5-1.5z"/>
+                </svg>
+                Instagram
+              </a>
+              <a href="https://x.com/arauca1noticias?s=21" target="_blank" rel="noopener noreferrer" class="social-link twitter-link">
+                <svg class="social-logo" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                X (Twitter)
+              </a>
+            </div>
           </div>
         </div>
         
         <div class="footer-bottom">
-          <p>&copy; 2024 Arauca Noticias. Todos los derechos reservados.</p>
+          <p>&copy; 2025 Arauca Noticias. Todos los derechos reservados.</p>
+          <div class="footer-legal">
+            <a href="#" @click="openPrivacyModal">Política de Privacidad</a>
+            <a href="#" @click="openTermsModal">Términos de Uso</a>
+          </div>
         </div>
       </div>
     </footer>
+
+    <!-- Privacy Policy Modal -->
+    <div v-if="showPrivacyModal" class="modal-overlay" @click="closePrivacyModal">
+      <div class="modal-content policy-modal" @click.stop>
+        <button @click="closePrivacyModal" class="modal-close" title="Cerrar">&times;</button>
+        <div class="modal-header">
+          <h2>Política de Privacidad</h2>
+        </div>
+        <div class="modal-body policy-body">
+          <div class="policy-content">
+            <p class="policy-date"><strong>Última actualización:</strong> 2 de septiembre de 2025</p>
+            
+            <h3>1. Información que recopilamos</h3>
+            <p>Recopilamos información que nos proporcionas directamente, como cuando te suscribes a nuestro boletín, nos contactas o participas en nuestras encuestas.</p>
+            
+            <h3>2. Cómo usamos tu información</h3>
+            <p>Utilizamos la información recopilada para:</p>
+            <ul>
+              <li>Proporcionar y mejorar nuestros servicios</li>
+              <li>Enviarte actualizaciones y noticias relevantes</li>
+              <li>Responder a tus consultas y comentarios</li>
+              <li>Analizar el uso de nuestro sitio web</li>
+            </ul>
+            
+            <h3>3. Compartir información</h3>
+            <p>No vendemos, alquilamos ni compartimos tu información personal con terceros, excepto cuando sea necesario para proporcionar nuestros servicios o cuando la ley lo requiera.</p>
+            
+            <h3>4. Seguridad</h3>
+            <p>Implementamos medidas de seguridad apropiadas para proteger tu información personal contra acceso no autorizado, alteración, divulgación o destrucción.</p>
+            
+            <h3>5. Tus derechos</h3>
+            <p>Tienes derecho a acceder, corregir, eliminar o restringir el procesamiento de tu información personal. Para ejercer estos derechos, contáctanos.</p>
+            
+            <h3>6. Contacto</h3>
+            <p>Si tienes preguntas sobre esta Política de Privacidad, puedes contactarnos en:</p>
+            <p>📧 Email: Araucanoticias2019@gmail.com<br>
+            📱 Teléfono: +57 310 2279487</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terms of Use Modal -->
+    <div v-if="showTermsModal" class="modal-overlay" @click="closeTermsModal">
+      <div class="modal-content policy-modal" @click.stop>
+        <button @click="closeTermsModal" class="modal-close" title="Cerrar">&times;</button>
+        <div class="modal-header">
+          <h2>Términos de Uso</h2>
+        </div>
+        <div class="modal-body policy-body">
+          <div class="policy-content">
+            <p class="policy-date"><strong>Última actualización:</strong> 2 de septiembre de 2025</p>
+            
+            <h3>1. Aceptación de los términos</h3>
+            <p>Al acceder y usar este sitio web, aceptas cumplir con estos términos de uso y todas las leyes y regulaciones aplicables.</p>
+            
+            <h3>2. Uso del sitio</h3>
+            <p>Puedes usar nuestro sitio web para:</p>
+            <ul>
+              <li>Leer noticias y artículos informativos</li>
+              <li>Compartir contenido en redes sociales</li>
+              <li>Contactarnos para consultas</li>
+              <li>Suscribirte a nuestro boletín</li>
+            </ul>
+            
+            <h3>3. Contenido</h3>
+            <p>Todo el contenido publicado en este sitio web es propiedad de Arauca Noticias o se usa con permiso. No puedes reproducir, distribuir o modificar nuestro contenido sin autorización escrita.</p>
+            
+            <h3>4. Conducta del usuario</h3>
+            <p>Al usar nuestro sitio, te comprometes a:</p>
+            <ul>
+              <li>No usar el sitio para actividades ilegales</li>
+              <li>No intentar acceder a áreas restringidas</li>
+              <li>No interferir con el funcionamiento del sitio</li>
+              <li>Respetar los derechos de otros usuarios</li>
+            </ul>
+            
+            <h3>5. Limitación de responsabilidad</h3>
+            <p>Arauca Noticias no se hace responsable por daños directos, indirectos, incidentales o consecuenciales que puedan resultar del uso de este sitio web.</p>
+            
+            <h3>6. Modificaciones</h3>
+            <p>Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor inmediatamente después de su publicación en el sitio.</p>
+            
+            <h3>7. Contacto</h3>
+            <p>Para preguntas sobre estos términos, contáctanos en:</p>
+            <p>📧 Email: Araucanoticias2019@gmail.com<br>
+            📱 Teléfono: +57 310 2279487</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -142,45 +352,225 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { newsService } from '../services/api.js'
+import MetaTags from './MetaTags.vue'
+import { useTheme } from '../composables/useTheme.js'
 
 export default {
   name: 'NewsDetail',
+  components: {
+    MetaTags
+  },
   setup() {
     const route = useRoute()
     const router = useRouter()
     const news = ref(null)
     const allNews = ref([])
+    const isLoading = ref(true)
+    const currentImageIndex = ref(0)
+    const showPrivacyModal = ref(false)
+    const showTermsModal = ref(false)
 
     // Cargar noticias desde el API
     const loadNews = async () => {
       try {
+        console.log('🔄 NewsDetail - Cargando noticias relacionadas...')
         const response = await newsService.getAll({ per_page: 100 })
+        console.log('📰 NewsDetail - Respuesta de noticias relacionadas:', response)
         allNews.value = response.data.data || []
+        console.log('✅ NewsDetail - Noticias relacionadas cargadas:', allNews.value.length)
       } catch (error) {
-        console.error('Error cargando noticias:', error)
+        console.error('❌ NewsDetail - Error cargando noticias relacionadas:', error)
         allNews.value = []
       }
     }
 
     const relatedNews = computed(() => {
-      if (!news.value) return []
+      if (!news.value) {
+        console.log('🔍 NewsDetail - No hay noticia actual para calcular relacionadas')
+        return []
+      }
       
-      return allNews.value
+      const related = allNews.value
         .filter(item => item.id !== news.value.id && item.category === news.value.category)
         .slice(0, 3)
+      
+      console.log('🔗 NewsDetail - Noticias relacionadas calculadas:', related.length)
+      console.log('📊 NewsDetail - Categoría actual:', news.value.category)
+      console.log('📊 NewsDetail - Total noticias disponibles:', allNews.value.length)
+      
+      return related
+    })
+
+    // Meta tags computados para SEO y redes sociales
+    const metaTitle = computed(() => {
+      if (!news.value) return 'Arauca Noticias - Tu fuente confiable de información'
+      return `${news.value.title} - Arauca Noticias`
+    })
+
+    const metaDescription = computed(() => {
+      if (!news.value) return 'Mantente informado con las últimas noticias y acontecimientos'
+      return news.value.excerpt || news.value.content?.substring(0, 160) || 'Mantente informado con las últimas noticias y acontecimientos'
+    })
+
+    const metaImage = computed(() => {
+      if (!news.value) return 'https://araucanoticias.com.co/logo-aruca.png'
+      return getOptimizedImageUrl(news.value.image_url || news.value.image, 'large')
+    })
+
+    const metaUrl = computed(() => {
+      if (!news.value) return 'https://araucanoticias.com.co'
+      return `https://araucanoticias.com.co/noticia/${news.value.id}`
     })
 
 
     const formatDate = (date) => {
-      return new Intl.DateTimeFormat('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).format(date)
+      if (!date) return 'Fecha no disponible'
+      
+      try {
+        const dateObj = new Date(date)
+        
+        // Verificar si la fecha es válida
+        if (isNaN(dateObj.getTime())) {
+          console.warn('Fecha inválida recibida:', date)
+          return 'Fecha inválida'
+        }
+        
+        return new Intl.DateTimeFormat('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }).format(dateObj)
+      } catch (error) {
+        console.error('Error formateando fecha:', error, 'Fecha recibida:', date)
+        return 'Error en fecha'
+      }
     }
 
     const goToNews = (newsId) => {
       router.push(`/noticia/${newsId}`)
+    }
+
+    // Cache para imágenes procesadas
+    const imageCache = new Map()
+
+    // Función para extraer imágenes de una noticia (optimizada)
+    const getNewsImages = (news) => {
+      if (!news) return []
+      
+      // Verificar cache
+      const cacheKey = `news_${news.id}_images`
+      if (imageCache.has(cacheKey)) {
+        return imageCache.get(cacheKey)
+      }
+      
+      const images = []
+      
+      // Prioridad 1: Usar galería nueva si existe
+      if (news.gallery && news.gallery.length > 0) {
+        // Ordenar por orden y mostrar imagen principal primero
+        const sortedGallery = [...news.gallery].sort((a, b) => {
+          if (a.is_main) return -1  // Imagen principal va primero
+          if (b.is_main) return 1
+          return a.order - b.order  // Luego por orden
+        })
+        
+        sortedGallery.forEach((image, index) => {
+          const imageUrl = image.large_url || image.medium_url || image.thumbnail_url || image.optimized_url
+          
+          if (imageUrl) {
+            images.push({
+              src: getOptimizedImageUrl(imageUrl, 'large'),
+              alt: image.alt_text || news.title,
+              caption: image.caption || (image.is_main ? 'Imagen principal' : `Imagen ${index + 1}`)
+            })
+          }
+        })
+        
+        // Guardar en cache
+        imageCache.set(cacheKey, images)
+        return images
+      }
+      
+      // Fallback: Imagen principal legacy
+      if (news.image_url || news.image) {
+        images.push({
+          src: getOptimizedImageUrl(news.image_url || news.image, 'large'),
+          alt: news.title,
+          caption: 'Imagen principal'
+        })
+      }
+      
+      // Fallback: Extraer imágenes del contenido HTML (para noticias antiguas)
+      if (news.content && images.length === 0) {
+        const tempDiv = document.createElement('div')
+        tempDiv.innerHTML = news.content
+        const imgElements = tempDiv.querySelectorAll('img')
+        
+        imgElements.forEach((img, index) => {
+          if (img.src !== news.image) {
+            images.push({
+              src: getOptimizedImageUrl(img.src, 'large'),
+              alt: img.alt || `Imagen ${index + 1}`,
+              caption: img.alt || `Imagen ${index + 1}`
+            })
+          }
+        })
+      }
+      
+      // Guardar en cache
+      imageCache.set(cacheKey, images)
+      return images
+    }
+
+    const nextImage = () => {
+      if (news.value) {
+        const images = getNewsImages(news.value)
+        currentImageIndex.value = (currentImageIndex.value + 1) % images.length
+      }
+    }
+
+    const prevImage = () => {
+      if (news.value) {
+        const images = getNewsImages(news.value)
+        currentImageIndex.value = currentImageIndex.value === 0 ? images.length - 1 : currentImageIndex.value - 1
+      }
+    }
+
+    const goToImage = (index) => {
+      currentImageIndex.value = index
+    }
+
+    // Función para preload de la primera imagen
+    const preloadFirstImage = () => {
+      if (news.value) {
+        const images = getNewsImages(news.value)
+        if (images.length > 0) {
+          const img = new Image()
+          img.src = images[0].src
+          console.log('🖼️ Preloading first image:', images[0].src)
+        }
+      }
+    }
+
+    // Funciones para modales de footer
+    const openPrivacyModal = () => {
+      showPrivacyModal.value = true
+      document.body.style.overflow = 'hidden'
+    }
+
+    const closePrivacyModal = () => {
+      showPrivacyModal.value = false
+      document.body.style.overflow = 'auto'
+    }
+
+    const openTermsModal = () => {
+      showTermsModal.value = true
+      document.body.style.overflow = 'hidden'
+    }
+
+    const closeTermsModal = () => {
+      showTermsModal.value = false
+      document.body.style.overflow = 'auto'
     }
 
     // Función para obtener URLs optimizadas de imágenes
@@ -226,49 +616,75 @@ export default {
       return imageUrl
     }
 
-    // Sistema de tema (mismo que Home.vue)
-    const setThemeBasedOnTime = () => {
-      const hour = new Date().getHours()
-      const theme = (hour >= 20 || hour < 6) ? 'dark' : 'light'
-      document.documentElement.setAttribute('data-theme', theme)
-    }
-
-    const initializeTheme = () => {
-      const savedTheme = localStorage.getItem('theme-preference')
-      if (savedTheme) {
-        document.documentElement.setAttribute('data-theme', savedTheme)
-      } else {
-        setThemeBasedOnTime()
-      }
-    }
+    // Usar el composable de tema
+    const { currentTheme, getThemeIcon, getThemeTooltip } = useTheme()
 
     const loadCurrentNews = async () => {
       try {
+        isLoading.value = true
         const newsId = parseInt(route.params.id)
-        const response = await newsService.getById(newsId)
-        news.value = response.data
+        console.log('🔍 Loading news with ID:', newsId) // Debug log
         
-        // Cargar noticias relacionadas
-        await loadNews()
+        const response = await newsService.getById(newsId)
+        console.log('📰 News API Response:', response) // Debug log
+        console.log('📰 Response data:', response.data) // Debug log
+        
+        if (response.data) {
+          news.value = response.data
+          console.log('✅ News loaded successfully:', news.value) // Debug log
+          console.log('📅 News date value:', news.value.date) // Debug log
+          console.log('📅 News date type:', typeof news.value.date) // Debug log
+          
+          // Preload primera imagen para mejor UX
+          preloadFirstImage()
+        } else {
+          console.error('❌ No data in response')
+          throw new Error('No data received from API')
+        }
+        
+        // Cargar noticias relacionadas de forma diferida
+        setTimeout(() => {
+          loadNews()
+        }, 100)
       } catch (error) {
-        console.error('Error cargando noticia:', error)
+        console.error('❌ Error cargando noticia:', error)
+        console.error('❌ Error details:', error.message)
         router.push('/')
+      } finally {
+        isLoading.value = false
+        console.log('🏁 Loading finished, isLoading:', isLoading.value) // Debug log
       }
     }
 
     onMounted(async () => {
       await loadCurrentNews()
-      initializeTheme()
       // Scroll to top when component mounts
       window.scrollTo(0, 0)
     })
 
     return {
       news,
+      isLoading,
+      currentImageIndex,
+      showPrivacyModal,
+      showTermsModal,
       relatedNews,
       formatDate,
       goToNews,
-      getOptimizedImageUrl
+      getNewsImages,
+      nextImage,
+      prevImage,
+      goToImage,
+      preloadFirstImage,
+      openPrivacyModal,
+      closePrivacyModal,
+      openTermsModal,
+      closeTermsModal,
+      getOptimizedImageUrl,
+      metaTitle,
+      metaDescription,
+      metaImage,
+      metaUrl
     }
   }
 }
@@ -417,6 +833,146 @@ export default {
   padding: 2rem;
 }
 
+/* Image Gallery Styles */
+.article-image-gallery {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.gallery-container {
+  position: relative;
+  height: 500px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.gallery-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.gallery-slide.active {
+  opacity: 1;
+}
+
+.gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.gallery-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.3) 50%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+}
+
+/* Gallery Controls */
+.gallery-controls {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  z-index: 3;
+  transform: translateY(-50%);
+}
+
+.gallery-btn {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: var(--transition);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.gallery-btn:hover {
+  background: rgba(244, 119, 33, 0.9);
+  transform: scale(1.1);
+}
+
+/* Gallery Indicators */
+.gallery-indicators {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.75rem;
+  z-index: 3;
+}
+
+.gallery-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  background-color: transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  backdrop-filter: blur(5px);
+}
+
+.gallery-indicator.active,
+.gallery-indicator:hover {
+  background-color: white;
+  border-color: white;
+  transform: scale(1.2);
+}
+
+/* Image Caption */
+.gallery-caption {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.image-counter {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Legacy single image styles (fallback) */
 .article-image {
   margin-bottom: 2rem;
 }
@@ -621,17 +1177,174 @@ export default {
 
 /* Loading state */
 .loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 4rem;
   color: var(--text-light);
 }
 
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--border-light);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Skeleton Loading Styles */
+.skeleton-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.skeleton-header {
+  padding: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.skeleton-breadcrumb {
+  height: 16px;
+  width: 200px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.skeleton-title {
+  height: 40px;
+  width: 80%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-meta {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.skeleton-meta-item {
+  height: 20px;
+  width: 120px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-content {
+  padding: 2rem;
+}
+
+.skeleton-image {
+  height: 400px;
+  width: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+}
+
+.skeleton-text {
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-line:last-child {
+  margin-bottom: 0;
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Error state */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem;
+  color: var(--text-light);
+}
+
+.error-state p {
+  font-size: 1.125rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 119, 33, 0.3);
+}
+
 /* Footer styles */
 .footer {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
   padding: 3rem 0 1rem;
+  position: relative;
   margin-top: 4rem;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--secondary-color), var(--primary-color), var(--secondary-color));
 }
 
 .footer-content {
@@ -665,13 +1378,15 @@ export default {
   color: white;
 }
 
-.footer-links {
+.footer-links,
+.footer-contact {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.footer-links li {
+.footer-links li,
+.footer-contact li {
   margin-bottom: 0.5rem;
 }
 
@@ -685,12 +1400,200 @@ export default {
   color: white;
 }
 
+.footer-contact li {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+}
+
+.social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.social-link {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 0.5rem;
+}
+
+.social-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.social-logo {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.facebook-link:hover {
+  background: linear-gradient(135deg, #1877f2, #0d65d9);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
+}
+
+.instagram-link:hover {
+  background: linear-gradient(135deg, #e4405f, #c13584, #833ab4);
+  box-shadow: 0 6px 20px rgba(228, 64, 95, 0.4);
+}
+
+.twitter-link:hover {
+  background: linear-gradient(135deg, #333333, #000000);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   padding-top: 1rem;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-legal {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer-legal a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.footer-legal a:hover {
+  color: white;
+}
+
+/* Modal styles for policy and terms */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.policy-modal {
+  max-width: 800px !important;
+  width: 95% !important;
+  max-height: 95vh !important;
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: white;
+  transition: var(--transition);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 1002;
+  font-weight: bold;
+}
+
+.modal-close:hover {
+  background: rgba(244, 119, 33, 0.9);
+  transform: scale(1.1);
+}
+
+.modal-header {
+  padding: 2rem 2rem 0;
+  text-align: center;
+}
+
+.modal-header h2 {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.policy-body {
+  padding: 2rem;
+}
+
+.policy-content {
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+.policy-date {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: var(--bg-accent);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--primary-color);
+}
+
+.policy-content h3 {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 2rem 0 1rem 0;
+}
+
+.policy-content h3:first-of-type {
+  margin-top: 0;
+}
+
+.policy-content p {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+.policy-content ul {
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+
+.policy-content li {
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
 }
 
 /* Responsive design */
@@ -720,6 +1623,42 @@ export default {
   
   .related-grid {
     grid-template-columns: 1fr;
+  }
+  
+  /* Gallery responsive */
+  .gallery-container {
+    height: 300px;
+  }
+  
+  .gallery-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+  
+  .gallery-caption {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+  
+  /* Footer responsive */
+  .footer-bottom {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .footer-legal {
+    justify-content: center;
+  }
+  
+  .social-links {
+    gap: 0.75rem;
+  }
+  
+  .social-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
   }
 }
 

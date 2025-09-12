@@ -104,7 +104,12 @@ export const authService = {
 // Servicios de noticias
 export const newsService = {
   async getAll(params = {}) {
+    const cacheKey = `news_all_${JSON.stringify(params)}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
     const response = await api.get('/news', { params })
+    setCachedData(cacheKey, response.data)
     return response.data
   },
 

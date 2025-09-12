@@ -32,6 +32,7 @@
       </div>
     </header>
 
+
     <!-- Main Content -->
     <main class="main-content">
       <!-- Hero Section -->
@@ -71,9 +72,24 @@
       <!-- News Grid -->
       <section class="news-grid-section">
         <div class="container">
-          <div class="news-grid">
+          <!-- Loading State -->
+          <div v-if="isLoading" class="loading-state">
+            <div class="skeleton-grid">
+              <div v-for="n in 6" :key="n" class="skeleton-card">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-content">
+                  <div class="skeleton-title"></div>
+                  <div class="skeleton-excerpt"></div>
+                  <div class="skeleton-meta"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- News Grid -->
+          <div v-else class="news-grid">
             <article 
-              v-for="news in filteredNews" 
+              v-for="(news, index) in filteredNews" 
               :key="news.id"
               class="news-card"
             >
@@ -82,7 +98,8 @@
                   :src="getOptimizedImageUrl(news.image_url || news.thumbnail_url || news.optimized_image_url || news.image, 'medium')" 
                   :alt="news.title" 
                   class="card-image"
-                  loading="lazy"
+                  :loading="index < 3 ? 'eager' : 'lazy'"
+                  :decoding="index < 3 ? 'sync' : 'async'"
                 >
                 <div class="card-category">{{ news.category }}</div>
               </div>
@@ -355,6 +372,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { newsService } from '../services/api.js'
+import { useTheme } from '../composables/useTheme.js'
 
 export default {
   name: 'NewsList',
@@ -374,16 +392,29 @@ export default {
 
     // Todas las noticias disponibles
     const allNews = ref([])
+    const isLoading = ref(true)
 
     const loadNews = async () => {
       try {
+        const startTime = performance.now()
+        console.log('🔄 [NewsList] Iniciando carga de noticias...')
+        isLoading.value = true
+        
         // Usar la API pública que filtra noticias despublicadas automáticamente
         const response = await newsService.getAll({ per_page: 100 })
-        console.log('API Response:', response) // Debug log
+        
+        const loadTime = performance.now() - startTime
+        console.log(`⚡ [NewsList] API cargada en ${loadTime.toFixed(2)}ms`)
+        
         allNews.value = response.data || []
+        console.log('✅ [NewsList] All news establecido:', allNews.value.length, 'noticias')
       } catch (error) {
-        console.error('Error cargando noticias:', error)
+        console.error('❌ [NewsList] Error cargando noticias:', error)
         allNews.value = []
+      } finally {
+        isLoading.value = false
+        const totalTime = performance.now() - startTime
+        console.log(`🏁 [NewsList] Carga completa en ${totalTime.toFixed(2)}ms`)
       }
     }
 
@@ -393,52 +424,40 @@ export default {
       return cats.sort()
     })
 
-    // Noticias filtradas
+    // Noticias filtradas (optimizado)
     const filteredNews = computed(() => {
-      console.log('All news:', allNews.value) // Debug log
-      console.log('Selected category:', selectedCategory.value) // Debug log
+      if (isLoading.value || !allNews.value.length) return []
       
+      const startTime = performance.now()
+      
+      let result
       if (selectedCategory.value === 'todas') {
-        return allNews.value.sort((a, b) => new Date(b.published_at || b.date) - new Date(a.published_at || a.date))
+        result = [...allNews.value].sort((a, b) => 
+          new Date(b.published_at || b.date) - new Date(a.published_at || a.date)
+        )
+      } else {
+        result = allNews.value
+          .filter(news => news.category === selectedCategory.value)
+          .sort((a, b) => new Date(b.published_at || b.date) - new Date(a.published_at || a.date))
       }
-      return allNews.value
-        .filter(news => news.category === selectedCategory.value)
-        .sort((a, b) => new Date(b.published_at || b.date) - new Date(a.published_at || a.date))
+      
+      const computeTime = performance.now() - startTime
+      console.log(`⚡ [NewsList] Filtrado completado en ${computeTime.toFixed(2)}ms - ${result.length} noticias`)
+      
+      return result
     })
 
     const toggleMobileMenu = () => {
       mobileMenuOpen.value = !mobileMenuOpen.value
     }
 
-    const openNewsModal = async (news) => {
-      try {
-        // Cargar los datos completos de la noticia desde la API
-        console.log('📖 Cargando noticia completa para modal:', news.id)
-        const response = await newsService.getById(news.id)
-        
-        if (response.success) {
-          selectedNews.value = response.data
-          currentImageIndex.value = 0
-          document.body.style.overflow = 'hidden'
-          console.log('✅ Noticia completa cargada:', response.data.title)
-        } else {
-          console.error('❌ Error al cargar noticia completa:', response.message)
-          // Fallback: usar los datos parciales disponibles
-          selectedNews.value = news
-          currentImageIndex.value = 0
-          document.body.style.overflow = 'hidden'
-        }
-      } catch (error) {
-        console.error('❌ Error al cargar noticia completa:', error)
-        // Fallback: usar los datos parciales disponibles
-        selectedNews.value = news
-        currentImageIndex.value = 0
-        document.body.style.overflow = 'hidden'
-      }
+    const openNewsModal = (news) => {
+      // Redirigir a la página de detalle de la noticia
+      window.location.href = `/noticia/${news.id}`
     }
 
     const shareNews = (news) => {
-      const url = `${window.location.origin}/noticias?news=${news.id}`
+      const url = `${window.location.origin}/noticia/${news.id}`
       
       if (navigator.share) {
         // Usar la API nativa de compartir si está disponible
@@ -658,65 +677,8 @@ export default {
     }
 
     // Funciones para el indicador de tema
-    const getThemeIcon = () => {
-      const hour = new Date().getHours()
-      if (hour >= 7 && hour < 12) return '🌅' // Amanecer
-      if (hour >= 12 && hour < 18) return '☀️' // Día
-      if (hour >= 18 && hour < 20) return '🌆' // Atardecer
-      return '🌙' // Noche
-    }
-
-    const getThemeTooltip = () => {
-      const hour = new Date().getHours()
-      const currentTheme = document.documentElement.getAttribute('data-theme')
-      const themeText = currentTheme === 'dark' ? 'Tema Oscuro' : 'Tema Claro'
-      return `${themeText} - Horario: ${hour}:00h (Automático)`
-    }
-
-    // Sistema de tema automático día/noche
-    const setThemeBasedOnTime = () => {
-      const hour = new Date().getHours()
-      // Tema oscuro: 18:00 - 7:00 (más natural)
-      const theme = (hour >= 18 || hour < 7) ? 'dark' : 'light'
-      
-      // Debug info
-      console.log(`🕐 [NewsList] Hora: ${hour}:${new Date().getMinutes()}, Tema: ${theme}`)
-      
-      document.documentElement.setAttribute('data-theme', theme)
-      
-      // Guardar preferencia
-      localStorage.setItem('theme-preference', theme)
-      localStorage.setItem('theme-set-time', Date.now().toString())
-      
-      // Force update del body si es necesario
-      document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease'
-    }
-
-    // Verificar tema guardado y tiempo
-    const initializeTheme = () => {
-      const savedTheme = localStorage.getItem('theme-preference')
-      const savedTime = localStorage.getItem('theme-set-time')
-      
-      console.log('🎨 [NewsList] Inicializando tema...')
-      console.log('💾 Tema guardado:', savedTheme)
-      
-      if (savedTheme && savedTime) {
-        const timeDiff = Date.now() - parseInt(savedTime)
-        console.log('⏰ Tiempo desde última actualización:', Math.round(timeDiff / 60000), 'minutos')
-        
-        // Si han pasado más de 5 minutos, revisar el horario (más frecuente)
-        if (timeDiff > 5 * 60 * 1000) {
-          console.log('🔄 [NewsList] Actualizando tema por tiempo transcurrido')
-          setThemeBasedOnTime()
-        } else {
-          console.log('✅ [NewsList] Usando tema guardado:', savedTheme)
-          document.documentElement.setAttribute('data-theme', savedTheme)
-        }
-      } else {
-        console.log('🆕 [NewsList] Primera vez, estableciendo tema basado en horario')
-        setThemeBasedOnTime()
-      }
-    }
+    // Usar el composable de tema
+    const { currentTheme, getThemeIcon, getThemeTooltip } = useTheme()
 
     // Funciones para manejo de videos
     const getVideoType = (videoUrl) => {
@@ -842,7 +804,6 @@ export default {
     // Verificar si hay un parámetro de noticia para abrir en modal al cargar
     onMounted(async () => {
       await loadNews()
-      initializeTheme() // Inicializar sistema de tema
       
       if (route.query.news) {
         const newsId = parseInt(route.query.news)
@@ -872,6 +833,7 @@ export default {
       selectedCategory,
       contactForm,
       allNews,
+      isLoading,
       categories,
       filteredNews,
       toggleMobileMenu,
@@ -1115,6 +1077,83 @@ export default {
 .news-grid-section {
   padding: 4rem 0;
   background-color: var(--bg-primary);
+}
+
+/* Loading State */
+.loading-state {
+  padding: 2rem 0;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.skeleton-card {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(90deg, var(--border-color) 25%, var(--border-light) 50%, var(--border-color) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+.skeleton-content {
+  padding: 1.5rem;
+}
+
+.skeleton-title {
+  height: 20px;
+  background: linear-gradient(90deg, var(--border-color) 25%, var(--border-light) 50%, var(--border-color) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.skeleton-excerpt {
+  height: 16px;
+  background: linear-gradient(90deg, var(--border-color) 25%, var(--border-light) 50%, var(--border-color) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-excerpt:nth-child(3) {
+  width: 70%;
+}
+
+.skeleton-meta {
+  height: 14px;
+  width: 40%;
+  background: linear-gradient(90deg, var(--border-color) 25%, var(--border-light) 50%, var(--border-color) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.loading-state p {
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .news-grid {
@@ -1985,6 +2024,7 @@ textarea.form-input {
     opacity: 0;
     visibility: hidden;
     transition: var(--transition);
+    z-index: 1000;
   }
   
   .nav-open {
@@ -1996,7 +2036,19 @@ textarea.form-input {
   .nav-list {
     flex-direction: column;
     padding: 1rem;
-    gap: 1rem;
+    gap: 0.5rem;
+  }
+  
+  .nav-list a {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    transition: var(--transition);
+    text-align: center;
+  }
+  
+  .nav-list a:hover {
+    background-color: var(--bg-secondary);
   }
   
   .hero-title {

@@ -33,6 +33,7 @@
       </div>
     </header>
 
+
     <!-- Main Content -->
     <main>
       <!-- Hero Carousel Section -->
@@ -636,6 +637,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { newsService } from '../services/api.js'
+import { useTheme } from '../composables/useTheme.js'
 
 export default {
   name: 'Home',
@@ -760,11 +762,11 @@ export default {
 
     const openNewsModal = (news) => {
       // Redirigir a la página de detalle de la noticia
-      router.push(`/noticias?news=${news.id}`)
+      router.push(`/noticia/${news.id}`)
     }
 
     const shareNews = (news) => {
-      const url = `${window.location.origin}/?news=${news.id}`
+      const url = `${window.location.origin}/noticia/${news.id}`
       
       if (navigator.share) {
         // Usar la API nativa de compartir si está disponible
@@ -1028,21 +1030,6 @@ export default {
       }
     }
 
-    // Funciones para el indicador de tema
-    const getThemeIcon = () => {
-      const hour = new Date().getHours()
-      if (hour >= 7 && hour < 12) return '🌅' // Amanecer
-      if (hour >= 12 && hour < 18) return '☀️' // Día
-      if (hour >= 18 && hour < 20) return '🌆' // Atardecer
-      return '🌙' // Noche
-    }
-
-    const getThemeTooltip = () => {
-      const hour = new Date().getHours()
-      const currentTheme = document.documentElement.getAttribute('data-theme')
-      const themeText = currentTheme === 'dark' ? 'Tema Oscuro' : 'Tema Claro'
-      return `${themeText} - Horario: ${hour}:00h (Automático)`
-    }
 
     // Funciones para manejo de videos
     const getVideoType = (videoUrl) => {
@@ -1205,80 +1192,22 @@ export default {
       return imageUrl
     }
 
-    // Sistema de tema automático día/noche
-    const setThemeBasedOnTime = () => {
-      const hour = new Date().getHours()
-      // Tema oscuro: 18:00 - 7:00 (más natural)
-      const theme = (hour >= 18 || hour < 7) ? 'dark' : 'light'
-      
-      // Debug info
-      console.log(`🕐 Hora: ${hour}:${new Date().getMinutes()}, Tema: ${theme}`)
-      
-      document.documentElement.setAttribute('data-theme', theme)
-      
-      // Guardar preferencia
-      localStorage.setItem('theme-preference', theme)
-      localStorage.setItem('theme-set-time', Date.now().toString())
-      
-      // Force update del body si es necesario
-      document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease'
-    }
-
-    // Verificar tema guardado y tiempo
-    const initializeTheme = () => {
-      const savedTheme = localStorage.getItem('theme-preference')
-      const savedTime = localStorage.getItem('theme-set-time')
-      
-      console.log('🎨 Inicializando tema...')
-      console.log('💾 Tema guardado:', savedTheme)
-      
-      if (savedTheme && savedTime) {
-        const timeDiff = Date.now() - parseInt(savedTime)
-        console.log('⏰ Tiempo desde última actualización:', Math.round(timeDiff / 60000), 'minutos')
-        
-        // Si han pasado más de 5 minutos, revisar el horario (más frecuente)
-        if (timeDiff > 5 * 60 * 1000) {
-          console.log('🔄 Actualizando tema por tiempo transcurrido')
-          setThemeBasedOnTime()
-        } else {
-          console.log('✅ Usando tema guardado:', savedTheme)
-          document.documentElement.setAttribute('data-theme', savedTheme)
-        }
-      } else {
-        console.log('🆕 Primera vez, estableciendo tema basado en horario')
-        setThemeBasedOnTime()
-      }
-    }
-
-    // Configurar intervalo para verificar cambio de hora
-    let themeInterval = null
-    const startThemeWatcher = () => {
-      themeInterval = setInterval(() => {
-        console.log('⚡ Verificación automática de tema...')
-        setThemeBasedOnTime()
-      }, 5 * 60 * 1000) // Verificar cada 5 minutos
-    }
-
-    // Función para forzar actualización del tema (para debugging)
-    const forceThemeUpdate = () => {
-      console.log('🔥 Forzando actualización de tema...')
-      localStorage.removeItem('theme-preference')
-      localStorage.removeItem('theme-set-time')
-      setThemeBasedOnTime()
-    }
+    // Usar el composable de tema
+    const { currentTheme, getThemeIcon, getThemeTooltip } = useTheme()
 
     // Agregar escuchador de eventos para debugging (Ctrl+Shift+T)
     const handleKeyPress = (event) => {
       if (event.ctrlKey && event.shiftKey && event.key === 'T') {
-        forceThemeUpdate()
+        console.log('🔥 Forzando actualización de tema...')
+        localStorage.removeItem('theme-preference')
+        localStorage.removeItem('theme-set-time')
+        window.location.reload()
       }
     }
 
     onMounted(async () => {
       await loadNews()
       startCarousel()
-      initializeTheme()
-      startThemeWatcher()
       
       // Agregar escuchador de eventos
       document.addEventListener('keydown', handleKeyPress)
@@ -1308,9 +1237,6 @@ export default {
 
     onUnmounted(() => {
       stopCarousel()
-      if (themeInterval) {
-        clearInterval(themeInterval)
-      }
       
       // Remover escuchador de eventos
       document.removeEventListener('keydown', handleKeyPress)
@@ -2889,6 +2815,7 @@ textarea.form-input {
     opacity: 0;
     visibility: hidden;
     transition: var(--transition);
+    z-index: 1000;
   }
   
   .nav-open {
@@ -2900,7 +2827,19 @@ textarea.form-input {
   .nav-list {
     flex-direction: column;
     padding: 1rem;
-    gap: 1rem;
+    gap: 0.5rem;
+  }
+  
+  .nav-list a {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    transition: var(--transition);
+    text-align: center;
+  }
+  
+  .nav-list a:hover {
+    background-color: var(--bg-secondary);
   }
   
   .slide-title {
