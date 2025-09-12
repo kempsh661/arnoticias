@@ -415,7 +415,7 @@ export default {
         
         // Usar la API real
         const response = await newsService.getAll({ 
-          per_page: 10, 
+          per_page: 6, 
           page: page 
         })
         
@@ -425,16 +425,19 @@ export default {
         const newNews = response.data || []
         
         if (append) {
+          console.log('📝 [NewsList] Appending news. Before:', allNews.value.length, 'New:', newNews.length)
           allNews.value = [...allNews.value, ...newNews]
+          console.log('📝 [NewsList] After append:', allNews.value.length)
         } else {
           allNews.value = newNews
         }
         
         // Verificar si hay más páginas
-        hasMoreNews.value = newNews.length === 10
+        hasMoreNews.value = newNews.length === 6
         currentPage.value = page
         
         console.log('✅ [NewsList] Noticias cargadas:', allNews.value.length, 'total')
+        console.log('📊 [NewsList] hasMoreNews:', hasMoreNews.value, 'newNews.length:', newNews.length)
       } catch (error) {
         console.error('❌ [NewsList] Error cargando noticias:', error)
         if (!append) allNews.value = []
@@ -479,8 +482,16 @@ export default {
     }
 
     const loadMoreNews = () => {
+      console.log('🔄 [NewsList] loadMoreNews clicked')
+      console.log('📊 [NewsList] hasMoreNews:', hasMoreNews.value)
+      console.log('📊 [NewsList] isLoading:', isLoading.value)
+      console.log('📊 [NewsList] currentPage:', currentPage.value)
+      
       if (hasMoreNews.value && !isLoading.value) {
+        console.log('✅ [NewsList] Loading more news, page:', currentPage.value + 1)
         loadNews(currentPage.value + 1, true)
+      } else {
+        console.log('❌ [NewsList] Cannot load more news - hasMoreNews:', hasMoreNews.value, 'isLoading:', isLoading.value)
       }
     }
 
