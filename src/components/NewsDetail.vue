@@ -19,14 +19,26 @@
             </h1>
           </div>
           
-          <nav class="nav">
+          <nav class="nav" :class="{ 'nav-open': mobileMenuOpen }">
             <ul class="nav-list">
               <li><router-link to="/" class="nav-link">Inicio</router-link></li>
-              <li><a href="/#noticias" class="nav-link">Noticias</a></li>
               <li><a href="/#destacadas" class="nav-link">Destacadas</a></li>
+              <li><router-link to="/noticias" class="nav-link">Noticias</router-link></li>
               <li><a href="/#nosotros" class="nav-link">Nosotros</a></li>
+              <li><a href="#" @click="openContactModal" class="nav-link">Contacto</a></li>
+              <li class="theme-indicator">
+                <span class="theme-icon" :title="getThemeTooltip()">
+                  {{ getThemeIcon() }}
+                </span>
+              </li>
             </ul>
           </nav>
+          
+          <button class="mobile-menu-btn" @click="toggleMobileMenu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
       </div>
     </header>
@@ -345,6 +357,97 @@
         </div>
       </div>
     </div>
+
+    <!-- Contact Modal -->
+    <div v-if="showContactModal" class="modal-overlay" @click="closeContactModal">
+      <div class="modal-content" @click.stop>
+        <button @click="closeContactModal" class="modal-close" title="Cerrar">&times;</button>
+        <div class="modal-header">
+          <h2>Contáctanos</h2>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="submitContact" class="contact-form">
+            <div class="form-header">
+              <p class="form-subtitle">¿Tienes alguna pregunta o sugerencia? ¡Nos encantaría escucharte!</p>
+            </div>
+            
+            <div class="form-group">
+              <label for="name">
+                <span class="label-icon">👤</span>
+                Nombre completo
+              </label>
+              <input 
+                type="text" 
+                id="name" 
+                v-model="contactForm.name" 
+                required 
+                class="form-input"
+                placeholder="Escribe tu nombre completo"
+                autocomplete="name"
+              >
+            </div>
+            
+            <div class="form-group">
+              <label for="email">
+                <span class="label-icon">📧</span>
+                Correo electrónico
+              </label>
+              <input 
+                type="email" 
+                id="email" 
+                v-model="contactForm.email" 
+                required 
+                class="form-input"
+                placeholder="tu-email@ejemplo.com"
+                autocomplete="email"
+              >
+            </div>
+            
+            <div class="form-group">
+              <label for="subject">
+                <span class="label-icon">📝</span>
+                Asunto
+              </label>
+              <input 
+                type="text" 
+                id="subject" 
+                v-model="contactForm.subject" 
+                required 
+                class="form-input"
+                placeholder="¿De qué quieres hablarnos?"
+              >
+            </div>
+            
+            <div class="form-group">
+              <label for="message">
+                <span class="label-icon">💬</span>
+                Mensaje
+              </label>
+              <textarea 
+                id="message" 
+                v-model="contactForm.message" 
+                required 
+                rows="5"
+                class="form-input"
+                placeholder="Escribe tu mensaje aquí. Nos pondremos en contacto contigo lo antes posible."
+              ></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+              <span class="btn-icon">🚀</span>
+              Enviar Mensaje
+            </button>
+            
+            <div class="form-footer">
+              <p class="privacy-note">
+                <span class="privacy-icon">🔒</span>
+                Tu información está segura. Nunca compartiremos tus datos personales.
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -369,6 +472,14 @@ export default {
     const currentImageIndex = ref(0)
     const showPrivacyModal = ref(false)
     const showTermsModal = ref(false)
+    const mobileMenuOpen = ref(false)
+    const showContactModal = ref(false)
+    const contactForm = ref({
+      name: '',
+      email: '',
+      subject: '',
+      message: ''
+    })
 
     // Cargar noticias desde el API
     const loadNews = async () => {
@@ -634,6 +745,46 @@ export default {
     // Usar el composable de tema
     const { currentTheme, getThemeIcon, getThemeTooltip } = useTheme()
 
+    // Funciones para el menú móvil
+    const toggleMobileMenu = () => {
+      mobileMenuOpen.value = !mobileMenuOpen.value
+    }
+
+    // Funciones para el modal de contacto
+    const openContactModal = () => {
+      showContactModal.value = true
+      document.body.style.overflow = 'hidden'
+      mobileMenuOpen.value = false
+    }
+
+    const closeContactModal = () => {
+      showContactModal.value = false
+      document.body.style.overflow = 'auto'
+    }
+
+    const submitContact = () => {
+      const submitBtn = document.querySelector('.contact-form .btn-primary')
+      submitBtn.style.opacity = '0.7'
+      submitBtn.style.cursor = 'not-allowed'
+      submitBtn.innerHTML = '<span class="btn-icon">⏳</span>Enviando...'
+      
+      setTimeout(() => {
+        alert('¡Mensaje enviado correctamente! Te contactaremos pronto.')
+        contactForm.value = {
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        }
+        
+        submitBtn.style.opacity = '1'
+        submitBtn.style.cursor = 'pointer'
+        submitBtn.innerHTML = '<span class="btn-icon">🚀</span>Enviar Mensaje'
+        
+        closeContactModal()
+      }, 1500)
+    }
+
     const loadCurrentNews = async () => {
       try {
         isLoading.value = true
@@ -683,6 +834,9 @@ export default {
       currentImageIndex,
       showPrivacyModal,
       showTermsModal,
+      mobileMenuOpen,
+      showContactModal,
+      contactForm,
       relatedNews,
       formatDate,
       goToNews,
@@ -695,7 +849,13 @@ export default {
       closePrivacyModal,
       openTermsModal,
       closeTermsModal,
+      toggleMobileMenu,
+      openContactModal,
+      closeContactModal,
+      submitContact,
       getOptimizedImageUrl,
+      getThemeIcon,
+      getThemeTooltip,
       metaTitle,
       metaDescription,
       metaImage,
@@ -1611,11 +1771,55 @@ export default {
   color: var(--text-secondary);
 }
 
+/* Mobile menu button */
+.mobile-menu-btn {
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.mobile-menu-btn span {
+  width: 25px;
+  height: 3px;
+  background-color: var(--primary-color);
+  transition: var(--transition);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+  }
+  
+  .nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-primary);
+    box-shadow: var(--shadow-lg);
+    border-radius: 0 0 1rem 1rem;
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+  
+  .nav.nav-open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+  
   .nav-list {
     flex-direction: column;
     gap: 1rem;
+    padding: 1rem;
   }
   
   .article-title {

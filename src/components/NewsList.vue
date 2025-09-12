@@ -12,6 +12,7 @@
           <nav class="nav" :class="{ 'nav-open': mobileMenuOpen }">
             <ul class="nav-list">
               <li><a href="/" class="nav-link">Inicio</a></li>
+              <li><a href="/#destacadas" class="nav-link">Destacadas</a></li>
               <li><a href="#" class="nav-link active">Noticias</a></li>
               <li><a href="/#nosotros" class="nav-link">Nosotros</a></li>
               <li><a href="#" @click="openContactModal" class="nav-link">Contacto</a></li>
@@ -119,6 +120,13 @@
                 </div>
               </div>
             </article>
+          </div>
+          
+          <!-- Load More Button -->
+          <div v-if="hasMoreNews && !isLoading" class="load-more-section">
+            <button @click="loadMoreNews" class="btn btn-primary load-more-btn">
+              📰 Cargar Más Noticias
+            </button>
           </div>
         </div>
       </section>
@@ -374,6 +382,9 @@ import { useRoute } from 'vue-router'
 import { newsService } from '../services/api.js'
 import { useTheme } from '../composables/useTheme.js'
 
+// Configuración de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://barnoticias-production.up.railway.app/api/v1'
+
 export default {
   name: 'NewsList',
   setup() {
@@ -393,24 +404,40 @@ export default {
     // Todas las noticias disponibles
     const allNews = ref([])
     const isLoading = ref(true)
+    const currentPage = ref(1)
+    const hasMoreNews = ref(true)
 
-    const loadNews = async () => {
+    const loadNews = async (page = 1, append = false) => {
+      const startTime = performance.now()
       try {
-        const startTime = performance.now()
-        console.log('🔄 [NewsList] Iniciando carga de noticias...')
-        isLoading.value = true
+        console.log(`🔄 [NewsList] Cargando página ${page}...`)
+        if (!append) isLoading.value = true
         
-        // Usar la API pública que filtra noticias despublicadas automáticamente
-        const response = await newsService.getAll({ per_page: 100 })
+        // Usar la API real
+        const response = await newsService.getAll({ 
+          per_page: 10, 
+          page: page 
+        })
         
         const loadTime = performance.now() - startTime
         console.log(`⚡ [NewsList] API cargada en ${loadTime.toFixed(2)}ms`)
         
-        allNews.value = response.data || []
-        console.log('✅ [NewsList] All news establecido:', allNews.value.length, 'noticias')
+        const newNews = response.data || []
+        
+        if (append) {
+          allNews.value = [...allNews.value, ...newNews]
+        } else {
+          allNews.value = newNews
+        }
+        
+        // Verificar si hay más páginas
+        hasMoreNews.value = newNews.length === 10
+        currentPage.value = page
+        
+        console.log('✅ [NewsList] Noticias cargadas:', allNews.value.length, 'total')
       } catch (error) {
         console.error('❌ [NewsList] Error cargando noticias:', error)
-        allNews.value = []
+        if (!append) allNews.value = []
       } finally {
         isLoading.value = false
         const totalTime = performance.now() - startTime
@@ -449,6 +476,12 @@ export default {
 
     const toggleMobileMenu = () => {
       mobileMenuOpen.value = !mobileMenuOpen.value
+    }
+
+    const loadMoreNews = () => {
+      if (hasMoreNews.value && !isLoading.value) {
+        loadNews(currentPage.value + 1, true)
+      }
     }
 
     const openNewsModal = (news) => {
@@ -760,45 +793,30 @@ export default {
 
     // Función para obtener URLs optimizadas de imágenes
     const getOptimizedImageUrl = (imageUrl, size = 'medium') => {
-      if (!imageUrl) return ''
+      if (!imageUrl) return '/assets/placeholder-image.jpg'
       
       // Si es una URL de Cloudinary, usar la URL directamente
       if (imageUrl.includes('cloudinary.com')) {
         return imageUrl
       }
       
-      // Si es una URL local, agregar parámetros de optimización
-      if (imageUrl.includes('localhost:8000') || imageUrl.includes('api/v1/news')) {
-        const baseUrl = imageUrl.split('?')[0]
-        const params = new URLSearchParams()
-        
-        switch (size) {
-          case 'thumbnail':
-            params.set('width', '400')
-            params.set('height', '300')
-            params.set('quality', '80')
-            break
-          case 'medium':
-            params.set('width', '800')
-            params.set('height', '600')
-            params.set('quality', '85')
-            break
-          case 'large':
-            params.set('width', '1200')
-            params.set('height', '900')
-            params.set('quality', '90')
-            break
-          default:
-            params.set('width', '800')
-            params.set('height', '600')
-            params.set('quality', '85')
-        }
-        
-        return `${baseUrl}?${params.toString()}`
+      // Si es una URL completa (http/https), usar tal como está
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl
       }
       
-      // Si es una URL base64 o otra, devolver tal como está
-      return imageUrl
+      // Si es una URL relativa, agregar el dominio base
+      if (imageUrl.startsWith('/')) {
+        return `${API_BASE_URL.replace('/api/v1', '')}${imageUrl}`
+      }
+      
+      // Si es una URL base64, usar tal como está
+      if (imageUrl.startsWith('data:')) {
+        return imageUrl
+      }
+      
+      // Fallback: imagen placeholder
+      return '/assets/placeholder-image.jpg'
     }
 
     // Verificar si hay un parámetro de noticia para abrir en modal al cargar
@@ -836,7 +854,10 @@ export default {
       isLoading,
       categories,
       filteredNews,
+      currentPage,
+      hasMoreNews,
       toggleMobileMenu,
+      loadMoreNews,
       openNewsModal,
       shareNews,
       copyToClipboard,
@@ -2168,10 +2189,47 @@ textarea.form-input {
   font-size: 0.75rem;
 }
 
+/* Load More Section */
+.load-more-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+  padding: 2rem 0;
+}
+
+.load-more-btn {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border-radius: 50px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 15px rgba(244, 119, 33, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.load-more-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(244, 119, 33, 0.4);
+}
+
+.load-more-btn:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 768px) {
   .card-actions {
     flex-direction: column;
     gap: 0.5rem;
+  }
+  
+  .load-more-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
   }
 }
 </style>

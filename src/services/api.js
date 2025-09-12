@@ -1,3 +1,4 @@
+
 import axios from 'axios'
 
 // Configuración base de la API
@@ -5,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://barnoticias-p
 
 // Cache simple en memoria
 const cache = new Map()
-const CACHE_DURATION = parseInt(import.meta.env.VITE_CACHE_DURATION) || 5 * 60 * 1000 // 5 minutos por defecto
+const CACHE_DURATION = parseInt(import.meta.env.VITE_CACHE_DURATION) || 2 * 60 * 1000 // 2 minutos por defecto
 
 // Función para obtener datos del cache
 const getCachedData = (key) => {
@@ -32,7 +33,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
-  timeout: 10000, // 10 segundos timeout
+  timeout: 30000, // 30 segundos timeout
   validateStatus: (status) => status < 500 // No fallar en errores 4xx
 })
 
