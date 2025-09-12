@@ -418,13 +418,18 @@ export default {
       // Priorizar imagen de la galería si está disponible
       if (news.value.gallery && news.value.gallery.length > 0) {
         const mainImage = news.value.gallery.find(img => img.is_main) || news.value.gallery[0]
-        if (mainImage.large_url) {
+        // Usar medium_url para redes sociales (más pequeña y rápida)
+        if (mainImage.medium_url) {
+          return mainImage.medium_url
+        } else if (mainImage.optimized_url) {
+          return mainImage.optimized_url
+        } else if (mainImage.large_url) {
           return mainImage.large_url
         }
       }
       
-      // Fallback a imagen principal
-      return getOptimizedImageUrl(news.value.image_url || news.value.image, 'large')
+      // Fallback a imagen principal optimizada
+      return getOptimizedImageUrl(news.value.image_url || news.value.image, 'medium')
     })
 
     const metaUrl = computed(() => {

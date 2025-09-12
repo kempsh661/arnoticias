@@ -28,11 +28,16 @@ function generateStaticPage(news) {
   const title = `${news.title} - Arauca Noticias`;
   const description = news.excerpt || news.content?.substring(0, 160) || 'Mantente informado con las últimas noticias y acontecimientos';
   
-  // Obtener imagen principal
+  // Obtener imagen principal optimizada para redes sociales
   let image = 'https://araucanoticias.com.co/logo-aruca.png';
   if (news.gallery && news.gallery.length > 0) {
     const mainImage = news.gallery.find(img => img.is_main) || news.gallery[0];
-    if (mainImage.large_url) {
+    // Usar medium_url para redes sociales (más pequeña y rápida)
+    if (mainImage.medium_url) {
+      image = mainImage.medium_url;
+    } else if (mainImage.optimized_url) {
+      image = mainImage.optimized_url;
+    } else if (mainImage.large_url) {
       image = mainImage.large_url;
     }
   } else if (news.image_url || news.image) {
@@ -57,8 +62,8 @@ function generateStaticPage(news) {
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${image}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="800">
+  <meta property="og:image:height" content="600">
   <meta property="og:image:alt" content="${title}">
   <meta property="og:site_name" content="Arauca Noticias">
   <meta property="og:locale" content="es_CO">
