@@ -70,6 +70,8 @@ export default {
       updateMetaTag('og:image:width', '1200')
       updateMetaTag('og:image:height', '630')
       updateMetaTag('og:image:alt', props.title)
+      updateMetaTag('og:site_name', 'Arauca Noticias')
+      updateMetaTag('og:locale', 'es_CO')
       
       // Twitter Card
       updateMetaTag('twitter:card', 'summary_large_image')
@@ -78,6 +80,18 @@ export default {
       updateMetaTag('twitter:description', props.description)
       updateMetaTag('twitter:image', props.image)
       updateMetaTag('twitter:image:alt', props.title)
+      updateMetaTag('twitter:site', '@AraucaNoticias')
+      updateMetaTag('twitter:creator', '@AraucaNoticias')
+      
+      // Meta tags adicionales para WhatsApp y otras plataformas
+      updateMetaName('twitter:domain', 'araucanoticias.com.co')
+      updateMetaName('robots', 'index, follow')
+      updateMetaName('author', 'Arauca Noticias')
+      updateMetaName('publisher', 'Arauca Noticias')
+      
+      // Meta tags para móviles
+      updateMetaName('viewport', 'width=device-width, initial-scale=1.0')
+      updateMetaName('theme-color', '#1e40af')
     }
 
     onMounted(() => {

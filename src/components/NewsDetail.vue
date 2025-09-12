@@ -414,6 +414,16 @@ export default {
 
     const metaImage = computed(() => {
       if (!news.value) return 'https://araucanoticias.com.co/logo-aruca.png'
+      
+      // Priorizar imagen de la galería si está disponible
+      if (news.value.gallery && news.value.gallery.length > 0) {
+        const mainImage = news.value.gallery.find(img => img.is_main) || news.value.gallery[0]
+        if (mainImage.large_url) {
+          return mainImage.large_url
+        }
+      }
+      
+      // Fallback a imagen principal
       return getOptimizedImageUrl(news.value.image_url || news.value.image, 'large')
     })
 
@@ -761,7 +771,7 @@ export default {
 }
 
 .article {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   background-color: var(--bg-primary);
   border-radius: var(--border-radius-lg);
@@ -1107,7 +1117,7 @@ export default {
 
 /* Related news styles */
 .related-section {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -1203,7 +1213,7 @@ export default {
 
 /* Skeleton Loading Styles */
 .skeleton-container {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   background-color: var(--bg-primary);
   border-radius: var(--border-radius-lg);
