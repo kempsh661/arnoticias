@@ -128,15 +128,6 @@
               📰 Cargar Más Noticias
             </button>
           </div>
-          
-          <!-- Debug info -->
-          <div class="debug-info" style="margin-top: 1rem; padding: 1rem; background: #f0f0f0; border-radius: 8px; font-size: 0.9rem;">
-            <p><strong>Debug Info:</strong></p>
-            <p>hasMoreNews: {{ hasMoreNews }}</p>
-            <p>isLoading: {{ isLoading }}</p>
-            <p>currentPage: {{ currentPage }}</p>
-            <p>Total news: {{ allNews.length }}</p>
-          </div>
         </div>
       </section>
     </main>
@@ -432,9 +423,11 @@ export default {
         console.log(`⚡ [NewsList] API cargada en ${loadTime.toFixed(2)}ms`)
         console.log('🔍 [NewsList] Full API response:', response)
         console.log('🔍 [NewsList] Response data:', response.data)
+        console.log('🔍 [NewsList] Response meta:', response.data?.meta)
         
         // La API puede devolver los datos en response.data.data o response.data directamente
         const newNews = response.data?.data || response.data || []
+        const meta = response.data?.meta || {}
         
         let hasUniqueNews = true
         
@@ -464,10 +457,18 @@ export default {
           // hasMoreNews ya se estableció en false en el bloque de append
           console.log('📊 [NewsList] hasMoreNews set to false due to no unique news')
         } else {
-          // Si recibimos menos de 6 noticias, no hay más páginas
-          // Si recibimos exactamente 6, puede que haya más páginas
-          hasMoreNews.value = newNews.length === 6
-          console.log('📊 [NewsList] Pagination check - newNews.length:', newNews.length, 'hasMoreNews:', hasMoreNews.value)
+          // Usar información de meta si está disponible, sino usar lógica de fallback
+          if (meta.has_more_pages !== undefined) {
+            hasMoreNews.value = meta.has_more_pages
+            console.log('📊 [NewsList] Using meta.has_more_pages:', meta.has_more_pages)
+          } else if (meta.current_page && meta.last_page) {
+            hasMoreNews.value = meta.current_page < meta.last_page
+            console.log('📊 [NewsList] Using meta pagination - current:', meta.current_page, 'last:', meta.last_page)
+          } else {
+            // Fallback: Si recibimos menos de 6 noticias, no hay más páginas
+            hasMoreNews.value = newNews.length === 6
+            console.log('📊 [NewsList] Fallback pagination check - newNews.length:', newNews.length, 'hasMoreNews:', hasMoreNews.value)
+          }
         }
         
         currentPage.value = page
@@ -529,7 +530,6 @@ export default {
         loadNews(currentPage.value + 1, true)
       } else {
         console.log('❌ [NewsList] Cannot load more news - hasMoreNews:', hasMoreNews.value, 'isLoading:', isLoading.value)
-        alert(`Debug: hasMoreNews=${hasMoreNews.value}, isLoading=${isLoading.value}`)
       }
     }
 
