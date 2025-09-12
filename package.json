@@ -4,20 +4,23 @@
   "description": "Sitio de noticias Arauca Noticias - Vue.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run generate-meta && vite build",
     "preview": "vite preview",
     "serve": "vite preview",
-    "start": "npm run build && vite preview --host 0.0.0.0 --port $PORT"
+    "start": "npm run build && node server.js",
+    "generate-meta": "node scripts/generate-static-pages.js"
   },
   "dependencies": {
     "@vueuse/core": "^10.11.1",
     "axios": "^1.11.0",
+    "express": "^5.1.0",
     "vue": "^3.3.8",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.4.1",
     "terser": "^5.44.0",
-    "vite": "^4.5.0"
+    "vite": "^4.5.0",
+    "vite-plugin-prerender": "^1.0.8"
   }
 }
