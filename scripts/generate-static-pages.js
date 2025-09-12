@@ -96,11 +96,11 @@ function generateStaticPage(news) {
   </script>
 </head>
 <body>
-  <div style="text-align: center; padding: 50px; font-family: Inter, sans-serif;">
-    <h1>${news.title}</h1>
-    <p>${description}</p>
-    <img src="${image}" alt="${title}" style="max-width: 100%; height: auto; border-radius: 8px;">
-    <p><a href="/#/noticia/${news.id}">Ver noticia completa</a></p>
+  <div style="text-align: center; padding: 50px; font-family: Inter, sans-serif; max-width: 800px; margin: 0 auto;">
+    <h1 style="color: #1e40af; margin-bottom: 20px;">${news.title}</h1>
+    <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px; color: #374151;">${description}</p>
+    <img src="${image}" alt="${title}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 30px;">
+    <p style="margin-top: 30px;"><a href="/#/noticia/${news.id}" style="background: #1e40af; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">Ver noticia completa</a></p>
   </div>
 </body>
 </html>`;
