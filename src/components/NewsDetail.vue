@@ -170,8 +170,19 @@
         </div>
         
         <div v-else class="error-state">
-          <p>No se pudo cargar la noticia.</p>
-          <router-link to="/" class="btn btn-primary">Volver al inicio</router-link>
+          <div class="error-content">
+            <h2>😔 No se pudo cargar la noticia</h2>
+            <p>Lo sentimos, no pudimos cargar esta noticia. Esto puede deberse a:</p>
+            <ul>
+              <li>La noticia no existe o fue eliminada</li>
+              <li>Problemas de conexión con el servidor</li>
+              <li>El ID de la noticia es inválido</li>
+            </ul>
+            <div class="error-actions">
+              <router-link to="/noticias" class="btn btn-primary">Ver todas las noticias</router-link>
+              <router-link to="/" class="btn btn-secondary">Volver al inicio</router-link>
+            </div>
+          </div>
         </div>
 
         <!-- Related News Section -->
@@ -791,6 +802,12 @@ export default {
         const newsId = parseInt(route.params.id)
         console.log('🔍 Loading news with ID:', newsId) // Debug log
         
+        if (isNaN(newsId) || newsId <= 0) {
+          console.error('❌ Invalid news ID:', route.params.id)
+          news.value = null
+          return
+        }
+        
         const response = await newsService.getById(newsId)
         console.log('📰 News API Response:', response) // Debug log
         console.log('📰 Response data:', response.data) // Debug log
@@ -815,7 +832,16 @@ export default {
       } catch (error) {
         console.error('❌ Error cargando noticia:', error)
         console.error('❌ Error details:', error.message)
-        router.push('/')
+        console.error('❌ Error response:', error.response?.data)
+        
+        // No redirigir automáticamente, mostrar mensaje de error
+        news.value = null
+        
+        // Solo redirigir si es un error 404 (noticia no encontrada)
+        if (error.response?.status === 404) {
+          console.log('🔄 Noticia no encontrada, redirigiendo a noticias...')
+          router.push('/noticias')
+        }
       } finally {
         isLoading.value = false
         console.log('🏁 Loading finished, isLoading:', isLoading.value) // Debug log
@@ -1481,10 +1507,38 @@ export default {
   color: var(--text-light);
 }
 
-.error-state p {
+.error-content {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.error-content h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.error-content p {
   font-size: 1.125rem;
   margin-bottom: 1.5rem;
   color: var(--text-secondary);
+}
+
+.error-content ul {
+  text-align: left;
+  margin-bottom: 2rem;
+  color: var(--text-secondary);
+}
+
+.error-content li {
+  margin-bottom: 0.5rem;
+}
+
+.error-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .btn {
