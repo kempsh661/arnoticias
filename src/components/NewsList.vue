@@ -378,7 +378,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { newsService } from '../services/api.js'
 import { useTheme } from '../composables/useTheme.js'
 
@@ -389,6 +389,7 @@ export default {
   name: 'NewsList',
   setup() {
     const route = useRoute()
+    const router = useRouter()
     const mobileMenuOpen = ref(false)
     const selectedNews = ref(null)
     const showContactModal = ref(false)
@@ -534,8 +535,8 @@ export default {
     }
 
     const openNewsModal = (news) => {
-      // Redirigir a la página de detalle de la noticia
-      window.location.href = `/noticia/${news.id}`
+      // Navegar a la página de detalle de la noticia usando Vue Router
+      router.push(`/noticia/${news.id}`)
     }
 
     const shareNews = (news) => {
