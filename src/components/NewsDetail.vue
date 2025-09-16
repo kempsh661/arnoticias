@@ -110,10 +110,54 @@
             </div>
 
             <div class="article-video" v-if="news.video">
-              <video controls :poster="getOptimizedImageUrl(news.image_url || news.image, 'large')">
+              <!-- Video de YouTube -->
+              <iframe 
+                v-if="getVideoType(news.video) === 'youtube'"
+                :src="getYouTubeEmbedUrl(news.video)"
+                class="article-video-iframe"
+                frameborder="0"
+                allowfullscreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              ></iframe>
+              
+              <!-- Video de Facebook -->
+              <iframe 
+                v-else-if="getVideoType(news.video) === 'facebook'"
+                :src="getFacebookEmbedUrl(news.video)"
+                class="article-video-iframe"
+                frameborder="0"
+                allowfullscreen
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              ></iframe>
+              
+              <!-- Video de Vimeo -->
+              <iframe 
+                v-else-if="getVideoType(news.video) === 'vimeo'"
+                :src="getVimeoEmbedUrl(news.video)"
+                class="article-video-iframe"
+                frameborder="0"
+                allowfullscreen
+              ></iframe>
+              
+              <!-- Video directo (MP4, etc.) -->
+              <video 
+                v-else-if="getVideoType(news.video) === 'direct'"
+                controls 
+                :poster="getOptimizedImageUrl(news.image_url || news.image, 'large')"
+                class="article-video-element"
+              >
                 <source :src="news.video" type="video/mp4">
                 Tu navegador no soporta el elemento video.
               </video>
+              
+              <!-- Fallback para URLs desconocidas -->
+              <div v-else class="video-fallback">
+                <p>⚠️ Tipo de video no soportado.</p>
+                <p>Tipos soportados: YouTube, Facebook, Vimeo, MP4</p>
+                <a :href="news.video" target="_blank" class="video-link">
+                  Abrir video en nueva pestaña: {{ news.video }}
+                </a>
+              </div>
             </div>
 
             <div class="article-body">
@@ -848,6 +892,101 @@ export default {
       }
     }
 
+    // Funciones para manejo de videos
+    const getVideoType = (videoUrl) => {
+      if (!videoUrl) {
+        console.log('🔍 [Video] No hay URL de video')
+        return null
+      }
+      
+      console.log('🔍 [Video] Analizando URL:', videoUrl)
+      
+      // Detectar YouTube
+      if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+        console.log('📺 [Video] Detectado YouTube')
+        return 'youtube'
+      }
+      
+      // Detectar Facebook
+      if (videoUrl.includes('facebook.com') || videoUrl.includes('fb.watch')) {
+        console.log('📺 [Video] Detectado Facebook')
+        return 'facebook'
+      }
+      
+      // Detectar Vimeo
+      if (videoUrl.includes('vimeo.com')) {
+        console.log('📺 [Video] Detectado Vimeo')
+        return 'vimeo'
+      }
+      
+      // Detectar archivos de video directos
+      if (videoUrl.match(/\.(mp4|webm|ogg|avi|mov)(\?.*)?$/i)) {
+        console.log('📺 [Video] Detectado video directo')
+        return 'direct'
+      }
+      
+      console.log('⚠️ [Video] Tipo de video desconocido:', videoUrl)
+      return 'unknown'
+    }
+
+    const getYouTubeEmbedUrl = (url) => {
+      console.log('🔗 [YouTube] Generando URL embed para:', url)
+      let videoId = null
+      
+      // Formato: https://www.youtube.com/watch?v=VIDEO_ID
+      const watchMatch = url.match(/[?&]v=([^&]+)/)
+      if (watchMatch) {
+        videoId = watchMatch[1]
+        console.log('🔗 [YouTube] Video ID extraído (watch):', videoId)
+      }
+      
+      // Formato: https://youtu.be/VIDEO_ID
+      const shortMatch = url.match(/youtu\.be\/([^?&]+)/)
+      if (shortMatch) {
+        videoId = shortMatch[1]
+        console.log('🔗 [YouTube] Video ID extraído (short):', videoId)
+      }
+      
+      // Formato embed directo
+      const embedMatch = url.match(/youtube\.com\/embed\/([^?&]+)/)
+      if (embedMatch) {
+        videoId = embedMatch[1]
+        console.log('🔗 [YouTube] Video ID extraído (embed):', videoId)
+      }
+      
+      if (videoId) {
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&controls=1`
+        console.log('🔗 [YouTube] URL embed generada:', embedUrl)
+        return embedUrl
+      }
+      
+      console.log('❌ [YouTube] No se pudo extraer video ID')
+      return null
+    }
+
+    const getVimeoEmbedUrl = (url) => {
+      const match = url.match(/vimeo\.com\/(\d+)/)
+      if (match) {
+        return `https://player.vimeo.com/video/${match[1]}`
+      }
+      return null
+    }
+
+    const getFacebookEmbedUrl = (url) => {
+      // Limpiar la URL y extraer el enlace original
+      let cleanUrl = url
+      
+      // Si es un enlace fb.watch, obtener la URL original
+      if (url.includes('fb.watch')) {
+        // Para fb.watch necesitaríamos redirigir, por ahora usamos directamente
+        cleanUrl = url
+      }
+      
+      // Codificar la URL para el iframe de Facebook
+      const encodedUrl = encodeURIComponent(cleanUrl)
+      return `https://www.facebook.com/plugins/video.php?height=314&href=${encodedUrl}&show_text=false&width=560&t=0`
+    }
+
     onMounted(async () => {
       await loadCurrentNews()
       // Scroll to top when component mounts
@@ -882,6 +1021,10 @@ export default {
       getOptimizedImageUrl,
       getThemeIcon,
       getThemeTooltip,
+      getVideoType,
+      getYouTubeEmbedUrl,
+      getVimeoEmbedUrl,
+      getFacebookEmbedUrl,
       metaTitle,
       metaDescription,
       metaImage,
@@ -1195,12 +1338,47 @@ export default {
 
 .article-video {
   margin-bottom: 2rem;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
 }
 
-.article-video video {
+.article-video-element {
   width: 100%;
   max-height: 400px;
-  border-radius: var(--border-radius);
+  border-radius: 15px;
+}
+
+.article-video-iframe {
+  width: 100%;
+  height: 400px;
+  border: none;
+  border-radius: 15px;
+}
+
+.video-fallback {
+  text-align: center;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border-radius: 15px;
+  border: 2px dashed var(--border-light);
+}
+
+.video-fallback p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.video-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.video-link:hover {
+  text-decoration: underline;
 }
 
 .article-excerpt {

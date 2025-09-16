@@ -536,6 +536,14 @@ export default {
     }
 
     const openNewsModal = (news) => {
+      console.log('📰 [Modal] Abriendo noticia:', news.title)
+      console.log('📰 [Modal] Datos de la noticia:', {
+        id: news.id,
+        title: news.title,
+        video: news.video,
+        hasVideo: !!news.video
+      })
+      
       // Navegar a la página de detalle de la noticia usando Vue Router
       router.push(`/noticia/${news.id}`)
     }
@@ -766,56 +774,73 @@ export default {
 
     // Funciones para manejo de videos
     const getVideoType = (videoUrl) => {
-      if (!videoUrl) return null
+      if (!videoUrl) {
+        console.log('🔍 [Video] No hay URL de video')
+        return null
+      }
+      
+      console.log('🔍 [Video] Analizando URL:', videoUrl)
       
       // Detectar YouTube
       if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+        console.log('📺 [Video] Detectado YouTube')
         return 'youtube'
       }
       
       // Detectar Facebook
       if (videoUrl.includes('facebook.com') || videoUrl.includes('fb.watch')) {
+        console.log('📺 [Video] Detectado Facebook')
         return 'facebook'
       }
       
       // Detectar Vimeo
       if (videoUrl.includes('vimeo.com')) {
+        console.log('📺 [Video] Detectado Vimeo')
         return 'vimeo'
       }
       
       // Detectar archivos de video directos
       if (videoUrl.match(/\.(mp4|webm|ogg|avi|mov)(\?.*)?$/i)) {
+        console.log('📺 [Video] Detectado video directo')
         return 'direct'
       }
       
+      console.log('⚠️ [Video] Tipo de video desconocido:', videoUrl)
       return 'unknown'
     }
 
     const getYouTubeEmbedUrl = (url) => {
+      console.log('🔗 [YouTube] Generando URL embed para:', url)
       let videoId = null
       
       // Formato: https://www.youtube.com/watch?v=VIDEO_ID
       const watchMatch = url.match(/[?&]v=([^&]+)/)
       if (watchMatch) {
         videoId = watchMatch[1]
+        console.log('🔗 [YouTube] Video ID extraído (watch):', videoId)
       }
       
       // Formato: https://youtu.be/VIDEO_ID
       const shortMatch = url.match(/youtu\.be\/([^?&]+)/)
       if (shortMatch) {
         videoId = shortMatch[1]
+        console.log('🔗 [YouTube] Video ID extraído (short):', videoId)
       }
       
       // Formato embed directo
       const embedMatch = url.match(/youtube\.com\/embed\/([^?&]+)/)
       if (embedMatch) {
         videoId = embedMatch[1]
+        console.log('🔗 [YouTube] Video ID extraído (embed):', videoId)
       }
       
       if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&controls=1`
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&controls=1`
+        console.log('🔗 [YouTube] URL embed generada:', embedUrl)
+        return embedUrl
       }
       
+      console.log('❌ [YouTube] No se pudo extraer video ID')
       return null
     }
 
