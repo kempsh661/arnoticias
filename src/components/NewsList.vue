@@ -5,7 +5,7 @@
       <div class="container">
         <div class="header-content">
           <div class="logo">
-            <img src="/assets/logos/logo-principal.png" alt="Arauca Noticias" class="logo-image">
+            <img src="/assets/logos/logo-principal.png" alt="Arauca Noticias" class="logo-image" loading="eager" fetchpriority="high">
             <h1 class="logo-text">Arauca Noticias</h1>
           </div>
           
@@ -99,8 +99,9 @@
                   :src="getOptimizedImageUrl(news.image_url || news.thumbnail_url || news.optimized_image_url || news.image, 'medium')" 
                   :alt="news.title" 
                   class="card-image"
-                  :loading="index < 3 ? 'eager' : 'lazy'"
-                  :decoding="index < 3 ? 'sync' : 'async'"
+                  :loading="index < 2 ? 'eager' : 'lazy'"
+                  :decoding="index < 2 ? 'sync' : 'async'"
+                  :fetchpriority="index < 2 ? 'high' : 'low'"
                 >
                 <div class="card-category">{{ news.category }}</div>
               </div>
@@ -138,7 +139,7 @@
         <div class="footer-content">
           <div class="footer-section">
             <div class="footer-logo">
-              <img src="/assets/logos/logo-principal.png" alt="Arauca Noticias" class="footer-logo-image">
+              <img src="/assets/logos/logo-principal.png" alt="Arauca Noticias" class="footer-logo-image" loading="lazy">
               <h3>Arauca Noticias</h3>
             </div>
             <p class="footer-description">
