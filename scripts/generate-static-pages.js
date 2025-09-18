@@ -46,6 +46,19 @@ function generateStaticPage(news) {
     image = news.image_url || news.image;
   }
   
+  // Optimizar imagen para WhatsApp (más pequeña y mejor comprimida)
+  if (image.includes('cloudinary.com')) {
+    // Para Cloudinary, reemplazar toda la transformación existente
+    const baseUrl = image.split('/upload/')[0] + '/upload/';
+    const imagePath = image.split('/upload/')[1];
+    // Extraer solo el path de la imagen sin transformaciones
+    const cleanPath = imagePath.replace(/^[^\/]+\//, '');
+    image = `${baseUrl}w_800,h_420,c_fill,f_auto,q_auto/${cleanPath}`;
+  } else if (image.includes('barnoticias-production.up.railway.app')) {
+    // Para URLs locales, usar parámetros más pequeños
+    image = image.replace('width=1200&height=630&quality=90', 'width=800&height=420&quality=85');
+  }
+  
   const url = `https://araucanoticias.com.co/noticia/${news.id}`;
   
   return `<!DOCTYPE html>
@@ -64,8 +77,8 @@ function generateStaticPage(news) {
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${image}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="800">
+  <meta property="og:image:height" content="420">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:alt" content="${title}">
   <meta property="og:site_name" content="Arauca Noticias">
