@@ -49,17 +49,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Redirect to SPA -->
-  <script>
-    // Solo redirigir si no estamos en un bot o crawler de redes sociales
-    const isBot = /bot|crawler|spider|crawling/i.test(navigator.userAgent) || 
-                  /facebookexternalhit|twitterbot|linkedinbot|whatsapp/i.test(navigator.userAgent);
-    
-    if (!isBot) {
-      // Redirigir inmediatamente a la SPA sin mostrar contenido
-      window.location.replace('/noticia/17');
-    }
-  </script>
+  <!-- No redirect needed - only bots will see this page -->
 </head>
 <body>
   <!-- Contenido solo para bots de redes sociales -->

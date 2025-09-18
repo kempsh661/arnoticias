@@ -59,13 +59,18 @@ app.get('/noticia/:id', (req, res) => {
   const newsId = req.params.id;
   const staticPagePath = path.join(__dirname, 'public', 'noticia', `${newsId}.html`);
   
-  // Verificar si existe la página estática
-  if (fs.existsSync(staticPagePath)) {
-    console.log(`📄 Sirviendo página estática para noticia ${newsId}`);
+  // Detectar si es un bot de redes sociales
+  const userAgent = req.get('User-Agent') || '';
+  const isBot = /bot|crawler|spider|crawling/i.test(userAgent) || 
+                /facebookexternalhit|twitterbot|linkedinbot|whatsapp/i.test(userAgent);
+  
+  // Solo servir página estática a bots de redes sociales
+  if (isBot && fs.existsSync(staticPagePath)) {
+    console.log(`📄 Sirviendo página estática para bot: ${userAgent}`);
     res.sendFile(staticPagePath);
   } else {
-    // Si no existe, servir la SPA
-    console.log(`🔄 Redirigiendo a SPA para noticia ${newsId}`);
+    // Para usuarios humanos, servir la SPA directamente
+    console.log(`🔄 Sirviendo SPA para usuario humano: noticia ${newsId}`);
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   }
 });
