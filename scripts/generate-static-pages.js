@@ -114,10 +114,16 @@ function generateStaticPage(news) {
   
   <!-- Redirect to SPA -->
   <script>
-    // Redirigir a la SPA después de que los meta tags sean leídos
-    setTimeout(() => {
-      window.location.href = '/#/noticia/${news.id}';
-    }, 100);
+    // Solo redirigir si no estamos en un bot o crawler de redes sociales
+    const isBot = /bot|crawler|spider|crawling/i.test(navigator.userAgent) || 
+                  /facebookexternalhit|twitterbot|linkedinbot|whatsapp/i.test(navigator.userAgent);
+    
+    if (!isBot) {
+      // Redirigir a la SPA después de que los meta tags sean leídos
+      setTimeout(() => {
+        window.location.href = '/noticia/${news.id}';
+      }, 100);
+    }
   </script>
 </head>
 <body>
@@ -125,7 +131,7 @@ function generateStaticPage(news) {
     <h1 style="color: #1e40af; margin-bottom: 20px;">${news.title}</h1>
     <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px; color: #374151;">${description}</p>
     <img src="${image}" alt="${title}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 30px;">
-    <p style="margin-top: 30px;"><a href="/#/noticia/${news.id}" style="background: #1e40af; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">Ver noticia completa</a></p>
+    <p style="margin-top: 30px;"><a href="/noticia/${news.id}" style="background: #1e40af; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">Ver noticia completa</a></p>
   </div>
 </body>
 </html>`;
