@@ -119,14 +119,13 @@ function generateStaticPage(news) {
                   /facebookexternalhit|twitterbot|linkedinbot|whatsapp/i.test(navigator.userAgent);
     
     if (!isBot) {
-      // Redirigir a la SPA después de que los meta tags sean leídos
-      setTimeout(() => {
-        window.location.href = '/noticia/${news.id}';
-      }, 100);
+      // Redirigir inmediatamente a la SPA sin mostrar contenido
+      window.location.replace('/noticia/${news.id}');
     }
   </script>
 </head>
 <body>
+  <!-- Contenido solo para bots de redes sociales -->
   <div style="text-align: center; padding: 50px; font-family: Inter, sans-serif; max-width: 800px; margin: 0 auto;">
     <h1 style="color: #1e40af; margin-bottom: 20px;">${news.title}</h1>
     <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px; color: #374151;">${description}</p>

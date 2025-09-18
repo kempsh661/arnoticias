@@ -56,14 +56,13 @@
                   /facebookexternalhit|twitterbot|linkedinbot|whatsapp/i.test(navigator.userAgent);
     
     if (!isBot) {
-      // Redirigir a la SPA después de que los meta tags sean leídos
-      setTimeout(() => {
-        window.location.href = '/noticia/30';
-      }, 100);
+      // Redirigir inmediatamente a la SPA sin mostrar contenido
+      window.location.replace('/noticia/30');
     }
   </script>
 </head>
 <body>
+  <!-- Contenido solo para bots de redes sociales -->
   <div style="text-align: center; padding: 50px; font-family: Inter, sans-serif; max-width: 800px; margin: 0 auto;">
     <h1 style="color: #1e40af; margin-bottom: 20px;">Corporinoquia verificó el incumplimiento de medida preventiva de la empresa Tecnoindustrial del Llano, impuesta desde el año 2023</h1>
     <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px; color: #374151;">Corporinoquia constató el incumplimiento de la medida preventiva que ya se había impuesto en el año 2023 a la empresa Tecnoindustrial del Llano, en la cual se le ordenaba suspender el procesamiento del cereal hasta obtener permisos de emisiones atmosféricas.</p>

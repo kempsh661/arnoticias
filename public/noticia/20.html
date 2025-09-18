@@ -56,14 +56,13 @@
                   /facebookexternalhit|twitterbot|linkedinbot|whatsapp/i.test(navigator.userAgent);
     
     if (!isBot) {
-      // Redirigir a la SPA después de que los meta tags sean leídos
-      setTimeout(() => {
-        window.location.href = '/noticia/20';
-      }, 100);
+      // Redirigir inmediatamente a la SPA sin mostrar contenido
+      window.location.replace('/noticia/20');
     }
   </script>
 </head>
 <body>
+  <!-- Contenido solo para bots de redes sociales -->
   <div style="text-align: center; padding: 50px; font-family: Inter, sans-serif; max-width: 800px; margin: 0 auto;">
     <h1 style="color: #1e40af; margin-bottom: 20px;">¿Dónde está Carlos Angarita, comandante de Policía en Arauca?</h1>
     <p style="font-size: 18px; line-height: 1.6; margin-bottom: 30px; color: #374151;">Mientras la violencia se ensaña contra los uniformados en Arauca y Saravena, y los grupos armados imponen su ley a la vista de todos, el coronel Carlos Angarita Antolínes</p>
