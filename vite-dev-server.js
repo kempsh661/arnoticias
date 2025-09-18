@@ -51,3 +51,4 @@ server.middlewares.use('*', (req, res, next) => {
 await server.listen()
 console.log('🚀 Servidor de desarrollo ejecutándose en http://localhost:3000')
 console.log('📄 Rutas de noticias configuradas para desarrollo')
+

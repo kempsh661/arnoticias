@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const compression = require('compression');
+const { exec } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -73,6 +74,31 @@ app.get('/noticia/:id', (req, res) => {
     console.log(`🔄 Sirviendo SPA para usuario humano: noticia ${newsId}`);
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   }
+});
+
+// Endpoint para regenerar páginas estáticas
+app.post('/api/regenerate-static-pages', (req, res) => {
+  console.log('🔄 Regenerando páginas estáticas...');
+  
+  exec('npm run generate-meta', { cwd: __dirname }, (error, stdout, stderr) => {
+    if (error) {
+      console.error('❌ Error regenerando páginas estáticas:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error regenerando páginas estáticas',
+        error: error.message
+      });
+    }
+    
+    console.log('✅ Páginas estáticas regeneradas exitosamente');
+    console.log('📝 Output:', stdout);
+    
+    res.json({
+      success: true,
+      message: 'Páginas estáticas regeneradas exitosamente',
+      output: stdout
+    });
+  });
 });
 
 // Todas las demás rutas sirven la SPA

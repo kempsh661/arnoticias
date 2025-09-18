@@ -854,6 +854,21 @@ export default {
           }
         }
 
+        // Regenerar páginas estáticas para SEO y redes sociales
+        try {
+          console.log('🔄 Regenerando páginas estáticas...')
+          await fetch('/api/regenerate-static-pages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          console.log('✅ Páginas estáticas regeneradas exitosamente')
+        } catch (regenerateError) {
+          console.error('⚠️ Error regenerando páginas estáticas:', regenerateError)
+          // No mostrar error al usuario, es un proceso en segundo plano
+        }
+
         // Emitir evento de guardado - esto cerrará el modal y recargará la lista
         emit('saved', savedNews)
         

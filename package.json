@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "serve": "vite preview",
     "start": "npm run build && node server.js",
-    "generate-meta": "node scripts/generate-static-pages.js"
+    "generate-meta": "node scripts/generate-static-pages.js",
+    "auto-regenerate": "node scripts/auto-regenerate.js"
   },
   "dependencies": {
     "@vueuse/core": "^10.11.1",
