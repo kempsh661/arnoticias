@@ -66,6 +66,7 @@ function generateStaticPage(news) {
   <meta property="og:image" content="${image}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:alt" content="${title}">
   <meta property="og:site_name" content="Arauca Noticias">
   <meta property="og:locale" content="es_CO">
@@ -84,6 +85,10 @@ function generateStaticPage(news) {
   <meta name="twitter:domain" content="araucanoticias.com.co">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#1e40af">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Arauca Noticias">
   
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
