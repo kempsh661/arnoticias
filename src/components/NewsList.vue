@@ -549,8 +549,8 @@ export default {
     }
 
     const shareNews = (news) => {
-      // Usar URL que vaya directamente a la SPA para mejor experiencia
-      const url = `${window.location.origin}/#/noticia/${news.id}`
+      // Usar URL sin hash para mejor compatibilidad con el router
+      const url = `${window.location.origin}/noticia/${news.id}`
       
       if (navigator.share) {
         // Usar la API nativa de compartir si está disponible

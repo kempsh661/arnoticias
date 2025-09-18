@@ -212,19 +212,19 @@
             </div>
           </div>
         </div>
-        
-        <div v-else class="error-state">
+
+        <div v-else-if="hasError" class="error-container">
           <div class="error-content">
-            <h2>😔 No se pudo cargar la noticia</h2>
-            <p>Lo sentimos, no pudimos cargar esta noticia. Esto puede deberse a:</p>
-            <ul>
-              <li>La noticia no existe o fue eliminada</li>
-              <li>Problemas de conexión con el servidor</li>
-              <li>El ID de la noticia es inválido</li>
-            </ul>
+            <div class="error-icon">⚠️</div>
+            <h2 class="error-title">Oops! Algo salió mal</h2>
+            <p class="error-message">{{ errorMessage }}</p>
             <div class="error-actions">
-              <router-link to="/noticias" class="btn btn-primary">Ver todas las noticias</router-link>
-              <router-link to="/" class="btn btn-secondary">Volver al inicio</router-link>
+              <button @click="loadCurrentNews" class="btn btn-primary">
+                🔄 Reintentar
+              </button>
+              <router-link to="/" class="btn btn-secondary">
+                🏠 Ir al Inicio
+              </router-link>
             </div>
           </div>
         </div>
@@ -507,7 +507,7 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { newsService } from '../services/api.js'
 import MetaTags from './MetaTags.vue'
@@ -524,6 +524,8 @@ export default {
     const news = ref(null)
     const allNews = ref([])
     const isLoading = ref(true)
+    const hasError = ref(false)
+    const errorMessage = ref('')
     const currentImageIndex = ref(0)
     const showPrivacyModal = ref(false)
     const showTermsModal = ref(false)
@@ -874,11 +876,15 @@ export default {
     const loadCurrentNews = async () => {
       try {
         isLoading.value = true
+        hasError.value = false
+        errorMessage.value = ''
         const newsId = parseInt(route.params.id)
         console.log('🔍 Loading news with ID:', newsId) // Debug log
         
         if (isNaN(newsId) || newsId <= 0) {
           console.error('❌ Invalid news ID:', route.params.id)
+          hasError.value = true
+          errorMessage.value = 'ID de noticia inválido'
           news.value = null
           return
         }
@@ -909,13 +915,23 @@ export default {
         console.error('❌ Error details:', error.message)
         console.error('❌ Error response:', error.response?.data)
         
-        // No redirigir automáticamente, mostrar mensaje de error
+        // Mostrar mensaje de error
+        hasError.value = true
         news.value = null
         
-        // Solo redirigir si es un error 404 (noticia no encontrada)
         if (error.response?.status === 404) {
-          console.log('🔄 Noticia no encontrada, redirigiendo a noticias...')
-          router.push('/noticias')
+          errorMessage.value = 'Noticia no encontrada'
+          console.log('🔄 Noticia no encontrada, redirigiendo al inicio en 3 segundos...')
+          // Mostrar mensaje temporal antes de redirigir
+          setTimeout(() => {
+            router.push('/')
+          }, 3000)
+        } else if (error.response?.status === 500) {
+          errorMessage.value = 'Error del servidor. Inténtalo más tarde.'
+        } else if (error.code === 'NETWORK_ERROR' || !navigator.onLine) {
+          errorMessage.value = 'Sin conexión a internet. Verifica tu conexión.'
+        } else {
+          errorMessage.value = 'Error al cargar la noticia. Inténtalo más tarde.'
         }
       } finally {
         isLoading.value = false
@@ -1024,9 +1040,20 @@ export default {
       window.scrollTo(0, 0)
     })
 
+    // Observar cambios en la ruta para recargar la noticia
+    watch(() => route.params.id, async (newId, oldId) => {
+      if (newId !== oldId) {
+        console.log('🔄 Route changed, loading new news:', newId)
+        await loadCurrentNews()
+        window.scrollTo(0, 0)
+      }
+    })
+
     return {
       news,
       isLoading,
+      hasError,
+      errorMessage,
       currentImageIndex,
       showPrivacyModal,
       showTermsModal,
@@ -1748,6 +1775,87 @@ export default {
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Error Container Styles */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  padding: 2rem;
+}
+
+.error-container .error-content {
+  max-width: 500px;
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.error-container .error-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.error-container .error-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.error-container .error-message {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.error-container .error-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.error-container .error-actions .btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error-container .error-actions .btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.error-container .error-actions .btn-primary:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.error-container .error-actions .btn-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.error-container .error-actions .btn-secondary:hover {
+  background-color: var(--border-light);
+  transform: translateY(-2px);
 }
 
 .btn {
