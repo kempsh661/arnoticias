@@ -131,14 +131,27 @@ async function generateStaticPages() {
   try {
     console.log('🔄 Obteniendo lista de noticias...');
     
-    // Obtener lista de noticias
-    const newsList = await makeRequest('https://barnoticias-production.up.railway.app/api/v1/news?limit=50');
+    // Obtener todas las noticias (manejar paginación)
+    let allNews = [];
+    let currentPage = 1;
+    let hasMorePages = true;
     
-    if (!newsList.success || !newsList.data) {
-      throw new Error('No se pudieron obtener las noticias');
+    while (hasMorePages) {
+      console.log(`📄 Obteniendo página ${currentPage}...`);
+      const response = await makeRequest(`https://barnoticias-production.up.railway.app/api/v1/news?page=${currentPage}&limit=50`);
+      
+      if (!response.success || !response.data) {
+        throw new Error(`No se pudieron obtener las noticias de la página ${currentPage}`);
+      }
+      
+      allNews = allNews.concat(response.data);
+      
+      // Verificar si hay más páginas
+      hasMorePages = response.meta && response.meta.has_more_pages;
+      currentPage++;
     }
     
-    console.log(`📰 Encontradas ${newsList.data.length} noticias`);
+    console.log(`📰 Encontradas ${allNews.length} noticias en total`);
     
     // Crear directorio para páginas estáticas
     const staticDir = path.join(__dirname, '..', 'public', 'noticia');
@@ -147,7 +160,7 @@ async function generateStaticPages() {
     }
     
     // Generar página estática para cada noticia
-    for (const news of newsList.data) {
+    for (const news of allNews) {
       console.log(`📝 Generando página estática para: ${news.title}`);
       
       const staticPage = generateStaticPage(news);
