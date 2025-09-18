@@ -67,9 +67,10 @@ export default {
       updateMetaTag('og:title', props.title)
       updateMetaTag('og:description', props.description)
       updateMetaTag('og:image', props.image)
-      updateMetaTag('og:image:width', '800')
-      updateMetaTag('og:image:height', '600')
+      updateMetaTag('og:image:width', '1200')
+      updateMetaTag('og:image:height', '630')
       updateMetaTag('og:image:alt', props.title)
+      updateMetaTag('og:image:type', 'image/jpeg')
       updateMetaTag('og:site_name', 'Arauca Noticias')
       updateMetaTag('og:locale', 'es_CO')
       
@@ -92,6 +93,12 @@ export default {
       // Meta tags para móviles
       updateMetaName('viewport', 'width=device-width, initial-scale=1.0')
       updateMetaName('theme-color', '#1e40af')
+      
+      // Meta tags adicionales para mejor compatibilidad
+      updateMetaName('format-detection', 'telephone=no')
+      updateMetaName('apple-mobile-web-app-capable', 'yes')
+      updateMetaName('apple-mobile-web-app-status-bar-style', 'default')
+      updateMetaName('apple-mobile-web-app-title', 'Arauca Noticias')
     }
 
     onMounted(() => {

@@ -53,3 +53,4 @@ done
 
 echo "✅ Optimización de imágenes completada!"
 echo "📁 Respaldos guardados en: public/assets/logos/backup/"
+

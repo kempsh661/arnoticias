@@ -584,18 +584,30 @@ export default {
       // Priorizar imagen de la galería si está disponible
       if (news.value.gallery && news.value.gallery.length > 0) {
         const mainImage = news.value.gallery.find(img => img.is_main) || news.value.gallery[0]
-        // Usar medium_url para redes sociales (más pequeña y rápida)
-        if (mainImage.medium_url) {
+        
+        // Para redes sociales, usar imagen optimizada de 1200x630
+        if (mainImage.social_url) {
+          return mainImage.social_url
+        } else if (mainImage.cloudinary_secure_url) {
+          // Si está en Cloudinary, generar URL optimizada para redes sociales
+          return `${mainImage.cloudinary_secure_url.replace('/upload/', '/upload/w_1200,h_630,c_fill,f_auto,q_auto/')}`
+        } else if (mainImage.large_url) {
+          return mainImage.large_url
+        } else if (mainImage.medium_url) {
           return mainImage.medium_url
         } else if (mainImage.optimized_url) {
           return mainImage.optimized_url
-        } else if (mainImage.large_url) {
-          return mainImage.large_url
         }
       }
       
-      // Fallback a imagen principal optimizada
-      return getOptimizedImageUrl(news.value.image_url || news.value.image, 'medium')
+      // Fallback a imagen principal optimizada para redes sociales
+      const fallbackImage = news.value.image_url || news.value.image
+      if (fallbackImage && fallbackImage.includes('cloudinary.com')) {
+        // Si es Cloudinary, optimizar para redes sociales
+        return fallbackImage.replace('/upload/', '/upload/w_1200,h_630,c_fill,f_auto,q_auto/')
+      }
+      
+      return getOptimizedImageUrl(fallbackImage, 'social')
     })
 
     const metaUrl = computed(() => {
@@ -758,9 +770,23 @@ export default {
     const getOptimizedImageUrl = (imageUrl, size = 'medium') => {
       if (!imageUrl) return ''
       
-      // Si es una URL de Cloudinary, usar la URL directamente
+      // Si es una URL de Cloudinary, optimizar según el tamaño
       if (imageUrl.includes('cloudinary.com')) {
-        return imageUrl
+        const baseUrl = imageUrl.split('/upload/')[0] + '/upload/'
+        const imagePath = imageUrl.split('/upload/')[1]
+        
+        switch (size) {
+          case 'thumbnail':
+            return `${baseUrl}w_400,h_300,c_fill,f_auto,q_auto/${imagePath}`
+          case 'medium':
+            return `${baseUrl}w_800,h_600,c_fill,f_auto,q_auto/${imagePath}`
+          case 'large':
+            return `${baseUrl}w_1200,h_900,c_fill,f_auto,q_auto/${imagePath}`
+          case 'social':
+            return `${baseUrl}w_1200,h_630,c_fill,f_auto,q_auto/${imagePath}`
+          default:
+            return `${baseUrl}w_800,h_600,c_fill,f_auto,q_auto/${imagePath}`
+        }
       }
       
       // Si es una URL local, agregar parámetros de optimización
@@ -782,6 +808,11 @@ export default {
           case 'large':
             params.set('width', '1200')
             params.set('height', '900')
+            params.set('quality', '90')
+            break
+          case 'social':
+            params.set('width', '1200')
+            params.set('height', '630')
             params.set('quality', '90')
             break
           default:
@@ -2133,3 +2164,4 @@ export default {
   }
 }
 </style>
+

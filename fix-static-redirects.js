@@ -52,3 +52,4 @@ fs.readdir(noticiaDir, (err, files) => {
 
   console.log(`\n🎉 Proceso completado. ${fixedCount} archivos corregidos.`);
 });
+

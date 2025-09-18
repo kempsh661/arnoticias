@@ -871,9 +871,23 @@ export default {
     const getOptimizedImageUrl = (imageUrl, size = 'medium') => {
       if (!imageUrl) return '/assets/placeholder-image.jpg'
       
-      // Si es una URL de Cloudinary, usar la URL directamente
+      // Si es una URL de Cloudinary, optimizar según el tamaño
       if (imageUrl.includes('cloudinary.com')) {
-        return imageUrl
+        const baseUrl = imageUrl.split('/upload/')[0] + '/upload/'
+        const imagePath = imageUrl.split('/upload/')[1]
+        
+        switch (size) {
+          case 'thumbnail':
+            return `${baseUrl}w_400,h_300,c_fill,f_auto,q_auto/${imagePath}`
+          case 'medium':
+            return `${baseUrl}w_800,h_600,c_fill,f_auto,q_auto/${imagePath}`
+          case 'large':
+            return `${baseUrl}w_1200,h_900,c_fill,f_auto,q_auto/${imagePath}`
+          case 'social':
+            return `${baseUrl}w_1200,h_630,c_fill,f_auto,q_auto/${imagePath}`
+          default:
+            return `${baseUrl}w_800,h_600,c_fill,f_auto,q_auto/${imagePath}`
+        }
       }
       
       // Si es una URL completa (http/https), usar tal como está
