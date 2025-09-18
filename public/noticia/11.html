@@ -44,12 +44,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Redirect to SPA -->
+    <!-- Redirect to SPA -->
   <script>
-    // Redirigir a la SPA después de que los meta tags sean leídos
-    setTimeout(() => {
-      window.location.href = '/noticia/11';
-    }, 100);
+    // Solo redirigir si no estamos en un bot o crawler de redes sociales
+    const isBot = /bot|crawler|spider|crawling/i.test(navigator.userAgent) || 
+                  /facebookexternalhit|twitterbot|linkedinbot|whatsapp/i.test(navigator.userAgent);
+    
+    if (!isBot) {
+      // Redirigir a la SPA después de que los meta tags sean leídos
+      setTimeout(() => {
+        window.location.href = '/noticia/11';
+      }, 100);
+    }
   </script>
 </head>
 <body>
