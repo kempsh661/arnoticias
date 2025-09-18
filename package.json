@@ -4,6 +4,7 @@
   "description": "Sitio de noticias Arauca Noticias - Vue.js",
   "scripts": {
     "dev": "vite",
+    "dev:full": "node vite-dev-server.js",
     "build": "npm run generate-meta && vite build",
     "preview": "vite preview",
     "serve": "vite preview",

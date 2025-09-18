@@ -5,7 +5,12 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     port: 3000,
-    host: true
+    host: true,
+    // Configurar para manejar rutas de noticias en desarrollo
+    middlewareMode: false,
+    fs: {
+      allow: ['..']
+    }
   },
   preview: {
     host: '0.0.0.0',
