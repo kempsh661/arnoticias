@@ -4,10 +4,10 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-// Función para hacer peticiones HTTPS
-function makeRequest(url) {
+// Función para hacer peticiones HTTPS con timeout
+function makeRequest(url, timeout = 10000) {
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
+    const request = https.get(url, (res) => {
       let data = '';
       res.on('data', (chunk) => {
         data += chunk;
@@ -20,6 +20,12 @@ function makeRequest(url) {
         }
       });
     }).on('error', reject);
+    
+    // Agregar timeout
+    request.setTimeout(timeout, () => {
+      request.destroy();
+      reject(new Error('Request timeout'));
+    });
   });
 }
 
@@ -135,13 +141,56 @@ async function generateStaticPages() {
     let allNews = [];
     let currentPage = 1;
     let hasMorePages = true;
+    const maxRetries = 2;
     
     while (hasMorePages) {
       console.log(`📄 Obteniendo página ${currentPage}...`);
-      const response = await makeRequest(`https://barnoticias-production.up.railway.app/api/v1/news?page=${currentPage}&limit=50`);
+      
+      let response = null;
+      let lastError = null;
+      
+      // Intentar con reintentos
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          response = await makeRequest(`https://barnoticias-production.up.railway.app/api/v1/news?page=${currentPage}&limit=50`);
+          break; // Éxito, salir del loop de reintentos
+        } catch (error) {
+          lastError = error;
+          console.warn(`⚠️  Intento ${attempt}/${maxRetries} falló: ${error.message}`);
+          if (attempt < maxRetries) {
+            // Esperar antes de reintentar
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+      }
+      
+      // Si no se pudo obtener la respuesta después de todos los reintentos
+      if (!response) {
+        console.warn('⚠️  No se pudo conectar con la API después de varios intentos');
+        console.warn('⚠️  Motivo:', lastError?.message || 'Error desconocido');
+        
+        // Verificar si ya existen páginas estáticas
+        const staticDir = path.join(__dirname, '..', 'public', 'noticia');
+        const distDir = path.join(__dirname, '..', 'dist', 'noticia');
+        
+        if (fs.existsSync(staticDir)) {
+          const existingFiles = fs.readdirSync(staticDir).filter(f => f.endsWith('.html'));
+          console.log(`ℹ️  Se encontraron ${existingFiles.length} páginas estáticas existentes en public/noticia`);
+        }
+        
+        if (fs.existsSync(distDir)) {
+          const existingFiles = fs.readdirSync(distDir).filter(f => f.endsWith('.html'));
+          console.log(`ℹ️  Se encontraron ${existingFiles.length} páginas estáticas existentes en dist/noticia`);
+        }
+        
+        console.log('⚠️  Continuando sin generar nuevas páginas estáticas...');
+        console.log('ℹ️  Las páginas se pueden generar después del despliegue con el auto-regenerate');
+        return; // Salir sin error
+      }
       
       if (!response.success || !response.data) {
-        throw new Error(`No se pudieron obtener las noticias de la página ${currentPage}`);
+        console.warn(`⚠️  Respuesta inválida de la API en la página ${currentPage}`);
+        break;
       }
       
       allNews = allNews.concat(response.data);
@@ -149,6 +198,17 @@ async function generateStaticPages() {
       // Verificar si hay más páginas
       hasMorePages = response.meta && response.meta.has_more_pages;
       currentPage++;
+      
+      // Límite de seguridad para evitar bucles infinitos
+      if (currentPage > 100) {
+        console.warn('⚠️  Se alcanzó el límite máximo de páginas (100)');
+        break;
+      }
+    }
+    
+    if (allNews.length === 0) {
+      console.warn('⚠️  No se encontraron noticias para generar páginas estáticas');
+      return;
     }
     
     console.log(`📰 Encontradas ${allNews.length} noticias en total`);
@@ -173,8 +233,9 @@ async function generateStaticPages() {
     console.log(`📁 Archivos guardados en: ${staticDir}`);
     
   } catch (error) {
-    console.error('❌ Error generando páginas estáticas:', error.message);
-    process.exit(1);
+    console.error('❌ Error inesperado generando páginas estáticas:', error.message);
+    console.error('⚠️  Continuando sin generar páginas estáticas...');
+    // No llamar a process.exit(1) para permitir que el build continúe
   }
 }
 
