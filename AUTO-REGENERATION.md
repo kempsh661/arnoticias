@@ -92,3 +92,5 @@ Los logs del servidor mostrarán:
 - ✅ **Sin intervención manual**: Todo es automático
 - ✅ **Respaldo**: Cron job asegura que siempre estén actualizadas
 
+
+
