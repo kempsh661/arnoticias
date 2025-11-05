@@ -132,16 +132,39 @@ function generateStaticPage(news) {
 </html>`;
 }
 
+// Función para escribir archivo de forma asíncrona
+function writeFileAsync(filePath, content) {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(filePath, content, 'utf8', (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+// Función para procesar en paralelo con límite de concurrencia
+async function processInParallel(items, processor, concurrency = 10) {
+  const results = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    const batchResults = await Promise.all(batch.map(processor));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 // Función principal
 async function generateStaticPages() {
   try {
     console.log('🔄 Obteniendo lista de noticias...');
     
     // Obtener todas las noticias (manejar paginación)
+    // Aumentar límite por página para reducir número de peticiones
     let allNews = [];
     let currentPage = 1;
     let hasMorePages = true;
     const maxRetries = 2;
+    const itemsPerPage = 100; // Aumentado de 50 a 100 para menos peticiones
     
     while (hasMorePages) {
       console.log(`📄 Obteniendo página ${currentPage}...`);
@@ -149,17 +172,17 @@ async function generateStaticPages() {
       let response = null;
       let lastError = null;
       
-      // Intentar con reintentos
+      // Intentar con reintentos (reducir timeout y tiempo de espera)
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          response = await makeRequest(`https://barnoticias-production.up.railway.app/api/v1/news?page=${currentPage}&limit=50`);
+          response = await makeRequest(`https://barnoticias-production.up.railway.app/api/v1/news?page=${currentPage}&limit=${itemsPerPage}`, 8000);
           break; // Éxito, salir del loop de reintentos
         } catch (error) {
           lastError = error;
           console.warn(`⚠️  Intento ${attempt}/${maxRetries} falló: ${error.message}`);
           if (attempt < maxRetries) {
-            // Esperar antes de reintentar
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Reducir tiempo de espera
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
         }
       }
@@ -219,17 +242,19 @@ async function generateStaticPages() {
       fs.mkdirSync(staticDir, { recursive: true });
     }
     
-    // Generar página estática para cada noticia
-    for (const news of allNews) {
-      console.log(`📝 Generando página estática para: ${news.title}`);
-      
+    // Generar páginas estáticas en paralelo (procesamiento por lotes)
+    console.log(`⚡ Generando ${allNews.length} páginas estáticas en paralelo...`);
+    const startTime = Date.now();
+    
+    await processInParallel(allNews, async (news) => {
       const staticPage = generateStaticPage(news);
       const pageFile = path.join(staticDir, `${news.id}.html`);
-      
-      fs.writeFileSync(pageFile, staticPage);
-    }
+      await writeFileAsync(pageFile, staticPage);
+      return news.id;
+    }, 20); // Procesar 20 archivos en paralelo
     
-    console.log('✅ Páginas estáticas generadas exitosamente');
+    const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`✅ Páginas estáticas generadas exitosamente en ${elapsedTime}s`);
     console.log(`📁 Archivos guardados en: ${staticDir}`);
     
   } catch (error) {
