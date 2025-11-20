@@ -1,8 +1,14 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import path from 'path'
 
 export default defineConfig({
   plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
   server: {
     port: 3000,
     host: true,
@@ -34,11 +40,7 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
-        passes: 1 // Reducir a 1 pasada para build más rápido
-      },
-      format: {
-        comments: false
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn']
       }
     },
     rollupOptions: {
@@ -49,14 +51,7 @@ export default defineConfig({
       }
     },
     cssCodeSplit: true,
-    sourcemap: false,
-    // Optimizaciones para build más rápido
-    chunkSizeWarningLimit: 1000,
-    reportCompressedSize: false, // Deshabilitar cálculo de tamaño comprimido (más rápido)
-    target: 'esnext', // Usar ES modules modernos para mejor performance
-    modulePreload: {
-      polyfill: false // No polyfill para módulos modernos
-    }
+    sourcemap: false
   },
   optimizeDeps: {
     include: ['vue', 'vue-router']

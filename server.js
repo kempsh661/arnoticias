@@ -3,35 +3,57 @@ const path = require('path');
 const fs = require('fs');
 const compression = require('compression');
 const { exec } = require('child_process');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Verificar que el directorio dist existe
-const distPath = path.join(__dirname, 'dist');
-const indexHtmlPath = path.join(distPath, 'index.html');
-
-if (!fs.existsSync(distPath)) {
-  console.error('❌ Error: El directorio dist no existe. Ejecuta npm run build primero.');
-  process.exit(1);
-}
-
-if (!fs.existsSync(indexHtmlPath)) {
-  console.error('❌ Error: El archivo dist/index.html no existe. Ejecuta npm run build primero.');
-  process.exit(1);
-}
+// Middleware para parsear JSON
+app.use(express.json());
 
 // Middleware de compresión
 app.use(compression());
 
-// Headers de seguridad
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  next();
+// Helmet para headers de seguridad mejorados
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'", "https://barnoticias-production.up.railway.app"],
+      frameSrc: ["'self'", "https://www.youtube.com", "https://www.facebook.com", "https://player.vimeo.com"]
+    }
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
+// Rate limiting global
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Límite de 100 peticiones por IP
+  message: 'Demasiadas peticiones desde esta IP, por favor intente más tarde',
+  standardHeaders: true,
+  legacyHeaders: false
 });
+
+// Rate limiting estricto para API endpoints sensibles
+const apiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 5, // Solo 5 peticiones por hora
+  message: 'Límite de regeneración excedido, intente en 1 hora',
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+app.use(globalLimiter);
 
 // Configuración de caché para diferentes tipos de archivos
 const cacheOptions = {
@@ -40,37 +62,26 @@ const cacheOptions = {
   lastModified: true
 };
 
-// Endpoint de healthcheck explícito para Railway (debe estar ANTES del middleware estático)
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Endpoint raíz para healthcheck (debe estar ANTES del middleware estático)
-app.get('/', (req, res) => {
-  // Verificar que el archivo existe antes de servirlo
-  if (fs.existsSync(indexHtmlPath)) {
-    res.sendFile(indexHtmlPath);
-  } else {
-    res.status(500).send('Error: index.html no encontrado');
-  }
-});
+const shortCacheOptions = {
+  maxAge: '1h', // 1 hora para HTML
+  etag: true,
+  lastModified: true
+};
 
 // Servir archivos estáticos con configuración de caché optimizada
-// IMPORTANTE: El middleware estático debe ir DESPUÉS de las rutas específicas
 app.use(express.static('dist', {
   ...cacheOptions,
-  index: false, // Deshabilitar el index automático para que nuestra ruta '/' tenga prioridad
-  setHeaders: (res, filePath) => {
+  setHeaders: (res, path) => {
     // Archivos con hash (JS, CSS) - caché largo
-    if (filePath.match(/\.(js|css)$/) && filePath.includes('-')) {
+    if (path.match(/\.(js|css)$/) && path.includes('-')) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
     // Imágenes - caché largo
-    else if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/)) {
+    else if (path.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/)) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
     // HTML - caché corto
-    else if (filePath.match(/\.html$/)) {
+    else if (path.match(/\.html$/)) {
       res.setHeader('Cache-Control', 'public, max-age=3600');
     }
     // Otros archivos
@@ -101,10 +112,34 @@ app.get('/noticia/:id', (req, res) => {
   }
 });
 
-// Endpoint para regenerar páginas estáticas
-app.post('/api/regenerate-static-pages', (req, res) => {
+// Middleware de autenticación para endpoints administrativos
+const authenticateAdmin = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const apiSecret = process.env.API_SECRET || 'change-me-in-production';
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      success: false,
+      message: 'No se proporcionó token de autenticación'
+    });
+  }
+
+  const token = authHeader.substring(7);
+
+  if (token !== apiSecret) {
+    return res.status(403).json({
+      success: false,
+      message: 'Token de autenticación inválido'
+    });
+  }
+
+  next();
+};
+
+// Endpoint para regenerar páginas estáticas (PROTEGIDO)
+app.post('/api/regenerate-static-pages', apiLimiter, authenticateAdmin, (req, res) => {
   console.log('🔄 Regenerando páginas estáticas...');
-  
+
   exec('npm run generate-meta', { cwd: __dirname }, (error, stdout, stderr) => {
     if (error) {
       console.error('❌ Error regenerando páginas estáticas:', error);
@@ -114,10 +149,10 @@ app.post('/api/regenerate-static-pages', (req, res) => {
         error: error.message
       });
     }
-    
+
     console.log('✅ Páginas estáticas regeneradas exitosamente');
     console.log('📝 Output:', stdout);
-    
+
     res.json({
       success: true,
       message: 'Páginas estáticas regeneradas exitosamente',
@@ -128,54 +163,11 @@ app.post('/api/regenerate-static-pages', (req, res) => {
 
 // Todas las demás rutas sirven la SPA
 app.get('/*', (req, res) => {
-  const indexPath = path.join(__dirname, 'dist', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(500).send('Error: index.html no encontrado');
-  }
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// Manejo de errores global
-app.use((err, req, res, next) => {
-  console.error('❌ Error en el servidor:', err);
-  res.status(500).json({ 
-    error: 'Error interno del servidor',
-    message: err.message 
-  });
-});
-
-// Iniciar servidor con manejo de errores
-const server = app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor ejecutándose en puerto ${PORT}`);
-  console.log(`📁 Sirviendo archivos estáticos desde: ${distPath}`);
+  console.log(`📁 Sirviendo archivos estáticos desde: ${path.join(__dirname, 'dist')}`);
   console.log(`📄 Páginas estáticas de noticias desde: ${path.join(__dirname, 'public', 'noticia')}`);
-  console.log(`✅ Healthcheck disponible en: http://0.0.0.0:${PORT}/health`);
-});
-
-// Manejo de errores del servidor
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Error: El puerto ${PORT} ya está en uso`);
-  } else {
-    console.error('❌ Error al iniciar el servidor:', err);
-  }
-  process.exit(1);
-});
-
-// Manejo de señales de cierre
-process.on('SIGTERM', () => {
-  console.log('⚠️ SIGTERM recibido, cerrando servidor...');
-  server.close(() => {
-    console.log('✅ Servidor cerrado correctamente');
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('⚠️ SIGINT recibido, cerrando servidor...');
-  server.close(() => {
-    console.log('✅ Servidor cerrado correctamente');
-    process.exit(0);
-  });
 });

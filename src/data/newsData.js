@@ -6,7 +6,7 @@ const defaultNewsData = [
     id: 107,
     title: 'Alteración del orden público en Saravena deja dos uniformados de la Sijín muertos',
     excerpt: 'En las últimas horas se registró una fuerte balacera en el centro del municipio de Saravena, que dejó como saldo la muerte de dos uniformados adscritos a la Sijín de la Policía Nacional.',
-    image: '/assets/images/news/alteracion-principal.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Seguridad',
     date: new Date('2025-09-03T14:30:00'),
     content: `
@@ -40,7 +40,7 @@ const defaultNewsData = [
     id: 100,
     title: 'Bienestar Familiar promueve la unión y el diálogo en familias de Arauca',
     excerpt: 'Con el objetivo de fortalecer la unidad, la comunicación y la reconciliación en los hogares, el ICBF realizó el segundo Encuentro Comunitario de Aprendizaje.',
-    image: '/assets/images/news/icbf-principal.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Bienestar Social',
     date: new Date('2025-09-03T10:15:00'),
     content: `
@@ -73,7 +73,7 @@ const defaultNewsData = [
     id: 101,
     title: 'Avances en la Comisión Primera de Cámara de Representantes Colombia',
     excerpt: 'En la sesión del 02 de septiembre se aprobaron dos importantes Proyectos de Acto Legislativo: Mesada catorce para docentes y reforma a debates legislativos.',
-    image: '/assets/images/news/comision-principal.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Política',
     date: new Date('2025-09-03T10:15:00'),
     content: `
@@ -106,7 +106,7 @@ const defaultNewsData = [
     id: 102,
     title: 'Reinicia entrega de comidas calientes para adultos mayores en Arauca',
     excerpt: 'A partir del 08 de septiembre de 2025 se reinicia la entrega del beneficio de ración servida de comidas calientes para 1.000 adultos mayores del municipio.',
-    image: '/assets/images/news/comedor.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Bienestar Social',
     date: new Date('2025-09-03T16:45:00'),
     content: `
@@ -124,7 +124,7 @@ const defaultNewsData = [
     id: 103,
     title: 'Gestora social promueve el Cacao araucano y grandes eventos en Arauquita',
     excerpt: 'La gestora social departamental de Arauca, Gleydis Torres, lideró una mesa de articulación para promover el Cacao araucano y coordinar eventos del 9 al 12 de octubre.',
-    image: '/assets/images/news/gestora-social-principal.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Desarrollo Rural',
     date: new Date('2025-09-03T09:20:00'),
     content: `
@@ -161,7 +161,7 @@ const defaultNewsData = [
     id: 104,
     title: 'Diputada Alexa Quirife anuncia la pavimentación de la vía hacia Alto Cravo en Tame',
     excerpt: 'La diputada confirmó la aprobación de más de 28 mil millones de pesos para la pavimentación de la vía hacia el sitio turístico Alto Cravo.',
-    image: '/assets/images/news/diputada-principal.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Infraestructura',
     date: new Date('2025-09-03T14:00:00'),
     content: `
@@ -198,7 +198,7 @@ const defaultNewsData = [
     id: 105,
     title: 'Gestores de convivencia llegan a instituciones educativas de Arauca',
     excerpt: 'Gestores de convivencia de la Secretaría de Gobierno y Seguridad Ciudadana fomentan el respeto, la convivencia pacífica y proyectos de vida alejados de la violencia.',
-    image: '/assets/images/news/convivencia-principal.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Educación',
     date: new Date('2025-09-03T11:30:00'),
     content: `
@@ -234,7 +234,7 @@ const defaultNewsData = [
     id: 106,
     title: 'Arauca ocupa el tercer lugar nacional en tutelas por servicios de salud',
     excerpt: 'Las cifras de la Corte Constitucional revelan que Arauca interpone un alto número de acciones de tutela para garantizar servicios de salud a los araucanos.',
-    image: '/assets/images/news/mapa.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Salud',
     date: new Date('2025-09-03T08:45:00'),
     content: `
@@ -253,7 +253,7 @@ const defaultNewsData = [
     id: 1,
     title: 'El municipio de Arauca contará con 20 nuevos Gestores de Convivencia',
     excerpt: 'La Secretaría de Gobierno Municipal posesionó ante el alcalde Juan Qüenza y la Gestora Social Stephany Ortiz Tafur a 20 jóvenes gestores de Convivencia.',
-    image: '/assets/images/news/gestores-convivencia-main.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Gobierno',
     date: new Date('2025-09-02T15:20:00'),
     content: `
@@ -288,7 +288,7 @@ const defaultNewsData = [
     id: 2,
     title: 'Subsidio Familiar de Vivienda en Arrendamiento para Población Migrante',
     excerpt: 'La Administración Municipal informa que el Ministerio de Vivienda clasificó como Habilitadas a las personas postuladas al Subsidio Familiar de Vivienda en modalidad de Arrendamiento.',
-    image: '/assets/images/news/inclusion-social.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Vivienda',
     date: new Date('2025-09-02T12:10:00'),
     content: `
@@ -314,7 +314,7 @@ const defaultNewsData = [
     id: 3,
     title: 'Más colegios de Arauca, a tono con la cultura tributaria',
     excerpt: 'La charla de sensibilización por parte de los programas de la Secretaría de Hacienda recibieron estudiantes del ciclo VI de la Institución Educativa Francisco José de Caldas.',
-    image: '/assets/images/news/colegios-principal.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Educación',
     date: new Date('2025-09-02T17:35:00'),
     content: `
@@ -358,7 +358,7 @@ const defaultNewsData = [
     id: 4,
     title: 'Vigilancia y control del Programa de Alimentación Escolar PAE',
     excerpt: 'La Procuraduría General de la Nación adelantó una visita de vigilancia y control en la Institución Educativa General Santander para garantizar la calidad del PAE.',
-    image: '/assets/images/news/pae-principal.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Educación',
     date: new Date('2025-09-02T13:25:00'),
     content: `
@@ -410,7 +410,7 @@ const defaultNewsData = [
     id: 5,
     title: 'Lanzamiento del Circuito de la Llanura 2025',
     excerpt: 'Gracias a PIEDEMONT SAS como patrocinador oficial, se lanza el Circuito de la Llanura 2025, una experiencia de sano esparcimiento que impulsa el deporte, turismo y cultura.',
-    image: '/assets/images/news/lanzamiento-principal.jpeg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Deportes',
     date: new Date('2025-09-02T10:40:00'),
     content: `
@@ -451,7 +451,7 @@ const defaultNewsData = [
     id: 6,
     title: 'EN LIBERTAD MUJERES Y MENOR SECUESTRADOS EN TAME',
     excerpt: 'En una misión humanitaria integrada por la Iglesia Católica y la Defensoría del Pueblo, el ELN entregó a tres personas secuestradas en Tame, Arauca.',
-    image: '/assets/images/news/liberacion-tame-eln.jpg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Seguridad',
     date: new Date('2025-09-02T16:15:00'),
     content: `
@@ -476,7 +476,7 @@ const defaultNewsData = [
     id: 7,
     title: 'Avanza el proyecto del multicampus universitario en Saravena',
     excerpt: 'El gobernador Renson Martínez Prada lideró una mesa de trabajo para hacer seguimiento a los estudios y diseños del multicampus universitario en Saravena.',
-    image: '/assets/images/news/multicampus-saravena-principal.jpg',
+    image: '/assets/placeholder-image.jpg',
     category: 'Educación',
     date: new Date('2025-09-02T09:50:00'),
     content: `

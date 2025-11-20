@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Cache</title>
+</head>
+<body>
+    <h1>Limpiando caché...</h1>
+    <script>
+        // Limpiar localStorage
+        localStorage.clear();
+        
+        // Limpiar sessionStorage  
+        sessionStorage.clear();
+        
+        // Limpiar cookies
+        document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        
+        alert('Caché limpiado. Por favor recarga la página (Ctrl+Shift+R)');
+    </script>
+</body>
+</html>

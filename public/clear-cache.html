@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Limpiar Caché</title>
+    <style>
+        body { font-family: Arial; text-align: center; padding: 50px; }
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Limpiar Caché de la Aplicación</h1>
+    <button onclick="clearCache()">Limpiar Caché Ahora</button>
+    <p id="result"></p>
+    <script>
+        function clearCache() {
+            // Limpiar localStorage
+            localStorage.clear();
+            
+            // Limpiar sessionStorage
+            sessionStorage.clear();
+            
+            document.getElementById('result').innerHTML = 
+                '<strong style="color: green;">✓ Caché limpiado correctamente</strong><br>' +
+                'Por favor cierra esta pestaña y recarga la página principal (Ctrl+Shift+R)';
+        }
+    </script>
+</body>
+</html>
