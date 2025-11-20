@@ -95,19 +95,50 @@ app.use(express.static('dist', {
 app.get('/noticia/:id', (req, res) => {
   const newsId = req.params.id;
   const staticPagePath = path.join(__dirname, 'public', 'noticia', `${newsId}.html`);
-  
+
   // Detectar si es un bot de redes sociales
-  const userAgent = req.get('User-Agent') || '';
-  const isBot = /bot|crawler|spider|crawling/i.test(userAgent) || 
-                /facebookexternalhit|twitterbot|linkedinbot|whatsapp/i.test(userAgent);
-  
-  // Solo servir página estática a bots de redes sociales
-  if (isBot && fs.existsSync(staticPagePath)) {
-    console.log(`📄 Sirviendo página estática para bot: ${userAgent}`);
-    res.sendFile(staticPagePath);
+  const userAgent = (req.get('User-Agent') || '').toLowerCase();
+
+  // Lista completa de bots de redes sociales y crawlers
+  const botPatterns = [
+    'facebookexternalhit',
+    'facebot',
+    'twitterbot',
+    'linkedinbot',
+    'whatsapp',
+    'telegrambot',
+    'slackbot',
+    'discordbot',
+    'skypeuripreview',
+    'pinterest',
+    'googlebot',
+    'bingbot',
+    'slurp',
+    'duckduckbot',
+    'baiduspider',
+    'yandexbot',
+    'sogou',
+    'exabot',
+    'ia_archiver'
+  ];
+
+  const isBot = botPatterns.some(pattern => userAgent.includes(pattern)) ||
+                /bot|crawler|spider|crawling|preview|scraper/i.test(userAgent);
+
+  // Siempre servir página estática a bots, o si no existe servir la SPA
+  if (isBot) {
+    if (fs.existsSync(staticPagePath)) {
+      console.log(`📄 Bot detectado: "${req.get('User-Agent')}"`);
+      console.log(`📄 Sirviendo página estática: /noticia/${newsId}.html`);
+      res.sendFile(staticPagePath);
+    } else {
+      console.log(`⚠️  Bot detectado pero página estática no existe: ${newsId}`);
+      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    }
   } else {
     // Para usuarios humanos, servir la SPA directamente
-    console.log(`🔄 Sirviendo SPA para usuario humano: noticia ${newsId}`);
+    console.log(`🔄 Usuario humano: "${req.get('User-Agent')}"`);
+    console.log(`🔄 Sirviendo SPA: /noticia/${newsId}`);
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   }
 });
