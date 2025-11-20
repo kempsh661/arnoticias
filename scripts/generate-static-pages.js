@@ -36,13 +36,16 @@ function generateStaticPage(news) {
   
   // Obtener imagen principal optimizada para redes sociales (1200x630)
   let image = 'https://araucanoticias.com.co/logo-aruca.png';
+  let imageNeedsProcessing = true;
+  
   if (news.gallery && news.gallery.length > 0) {
     const mainImage = news.gallery.find(img => img.is_main) || news.gallery[0];
-    // Priorizar social_url para redes sociales (1200x630)
+    // Priorizar social_url para redes sociales (1200x630) - ya viene optimizada
     if (mainImage.social_url) {
       image = mainImage.social_url;
+      imageNeedsProcessing = false; // Ya está optimizada, no procesar
     } else if (mainImage.cloudinary_secure_url) {
-      // Si está en Cloudinary, generar URL optimizada para redes sociales
+      // Si está en Cloudinary, extraer el public_id y generar URL optimizada
       image = mainImage.cloudinary_secure_url;
     } else if (mainImage.large_url) {
       image = mainImage.large_url;
@@ -56,21 +59,52 @@ function generateStaticPage(news) {
   }
 
   // Optimizar imagen para WhatsApp y Facebook (1200x630 - formato óptimo)
-  if (image.includes('cloudinary.com')) {
-    // Para Cloudinary, usar dimensiones óptimas para redes sociales
-    const baseUrl = image.split('/upload/')[0] + '/upload/';
-    const imagePath = image.split('/upload/')[1];
-    // Extraer solo el path de la imagen sin transformaciones previas
-    const cleanPath = imagePath.replace(/^[^/]+\//, '');
-    // Formato óptimo para WhatsApp, Facebook, Twitter: 1200x630
-    image = `${baseUrl}w_1200,h_630,c_fill,f_auto,q_auto/${cleanPath}`;
-  } else if (image.includes('barnoticias-production.up.railway.app')) {
+  // Solo procesar si la imagen no viene ya optimizada (social_url)
+  if (imageNeedsProcessing && image.includes('cloudinary.com')) {
+    // Extraer el public_id de la URL de Cloudinary
+    // Formato: https://res.cloudinary.com/{cloud}/image/upload/{transformations}/{public_id}
+    // Ejemplo: https://res.cloudinary.com/du8kmvlpm/image/upload/w_400,h_300,c_fill,q_80/news/69/news/69/images/temp_1763587731_0
+    // El public_id puede contener slashes, así que extraemos todo después de /upload/
+    const uploadIndex = image.indexOf('/image/upload/');
+    if (uploadIndex !== -1) {
+      const afterUpload = image.substring(uploadIndex + '/image/upload/'.length);
+      // Las transformaciones están antes del primer slash que no es parte de una transformación
+      // Las transformaciones son como: w_400,h_300,c_fill,q_80
+      // El public_id es todo lo que viene después de las transformaciones y su slash
+      // Si hay un slash, todo después del primer segmento es el public_id
+      const parts = afterUpload.split('/');
+      if (parts.length > 1) {
+        // Hay transformaciones: el primer segmento son las transformaciones, el resto es el public_id
+        const publicId = parts.slice(1).join('/');
+        const baseUrl = image.substring(0, uploadIndex + '/image/upload/'.length);
+        // Formato óptimo para WhatsApp, Facebook, Twitter: 1200x630
+        image = `${baseUrl}w_1200,h_630,c_fill,f_auto,q_auto/${publicId}`;
+      } else {
+        // No hay transformaciones o el public_id no tiene slashes
+        // Intentar extraer el public_id de otra forma
+        const publicIdMatch = afterUpload.match(/^(?:[^\/]+\/)?(.+)$/);
+        if (publicIdMatch) {
+          const publicId = publicIdMatch[1];
+          const baseUrl = image.substring(0, uploadIndex + '/image/upload/'.length);
+          image = `${baseUrl}w_1200,h_630,c_fill,f_auto,q_auto/${publicId}`;
+        } else {
+          console.warn(`⚠️  No se pudo extraer public_id de URL de Cloudinary: ${image}`);
+        }
+      }
+    } else {
+      console.warn(`⚠️  URL de Cloudinary con formato inesperado: ${image}`);
+    }
+  } else if (imageNeedsProcessing && image.includes('barnoticias-production.up.railway.app')) {
     // Para URLs del backend, solicitar dimensiones óptimas para redes sociales
-    const url = new URL(image);
-    url.searchParams.set('width', '1200');
-    url.searchParams.set('height', '630');
-    url.searchParams.set('quality', '85');
-    image = url.toString();
+    try {
+      const url = new URL(image);
+      url.searchParams.set('width', '1200');
+      url.searchParams.set('height', '630');
+      url.searchParams.set('quality', '85');
+      image = url.toString();
+    } catch (e) {
+      console.warn('Error procesando URL del backend:', e.message);
+    }
   }
 
   // Asegurar que la URL sea absoluta
