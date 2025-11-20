@@ -41,6 +41,9 @@ function generateStaticPage(news) {
     // Priorizar social_url para redes sociales (1200x630)
     if (mainImage.social_url) {
       image = mainImage.social_url;
+    } else if (mainImage.cloudinary_secure_url) {
+      // Si está en Cloudinary, generar URL optimizada para redes sociales
+      image = mainImage.cloudinary_secure_url;
     } else if (mainImage.large_url) {
       image = mainImage.large_url;
     } else if (mainImage.medium_url) {
@@ -51,18 +54,30 @@ function generateStaticPage(news) {
   } else if (news.image_url || news.image) {
     image = news.image_url || news.image;
   }
-  
-  // Optimizar imagen para WhatsApp (más pequeña y mejor comprimida)
+
+  // Optimizar imagen para WhatsApp y Facebook (1200x630 - formato óptimo)
   if (image.includes('cloudinary.com')) {
-    // Para Cloudinary, reemplazar toda la transformación existente
+    // Para Cloudinary, usar dimensiones óptimas para redes sociales
     const baseUrl = image.split('/upload/')[0] + '/upload/';
     const imagePath = image.split('/upload/')[1];
-    // Extraer solo el path de la imagen sin transformaciones
-    const cleanPath = imagePath.replace(/^[^\/]+\//, '');
-    image = `${baseUrl}w_400,h_400,c_fill,f_auto,q_60/${cleanPath}`;
+    // Extraer solo el path de la imagen sin transformaciones previas
+    const cleanPath = imagePath.replace(/^[^/]+\//, '');
+    // Formato óptimo para WhatsApp, Facebook, Twitter: 1200x630
+    image = `${baseUrl}w_1200,h_630,c_fill,f_auto,q_auto/${cleanPath}`;
   } else if (image.includes('barnoticias-production.up.railway.app')) {
-    // Para URLs locales, usar parámetros más pequeños
-    image = image.replace('width=1200&height=630&quality=90', 'width=400&height=400&quality=60');
+    // Para URLs del backend, solicitar dimensiones óptimas para redes sociales
+    const url = new URL(image);
+    url.searchParams.set('width', '1200');
+    url.searchParams.set('height', '630');
+    url.searchParams.set('quality', '85');
+    image = url.toString();
+  }
+
+  // Asegurar que la URL sea absoluta
+  if (image && !image.startsWith('http://') && !image.startsWith('https://')) {
+    image = image.startsWith('/')
+      ? `https://araucanoticias.com.co${image}`
+      : `https://araucanoticias.com.co/${image}`;
   }
   
   const url = `https://araucanoticias.com.co/noticia/${news.id}`;
@@ -83,8 +98,9 @@ function generateStaticPage(news) {
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${image}">
-  <meta property="og:image:width" content="400">
-  <meta property="og:image:height" content="400">
+  <meta property="og:image:secure_url" content="${image}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:alt" content="${title}">
   <meta property="og:site_name" content="Arauca Noticias">

@@ -581,35 +581,56 @@ export default {
     })
 
     const metaImage = computed(() => {
-      if (!news.value) return 'https://araucanoticias.com.co/logo-aruca.png'
-      
+      const baseUrl = 'https://araucanoticias.com.co'
+
+      if (!news.value) return `${baseUrl}/logo-aruca.png`
+
+      // Función helper para convertir URLs relativas a absolutas
+      const makeAbsoluteUrl = (url) => {
+        if (!url) return `${baseUrl}/logo-aruca.png`
+
+        // Si ya es una URL absoluta, devolverla tal cual
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          return url
+        }
+
+        // Si es una URL relativa, convertirla a absoluta
+        if (url.startsWith('/')) {
+          return `${baseUrl}${url}`
+        }
+
+        return `${baseUrl}/${url}`
+      }
+
       // Priorizar imagen de la galería si está disponible
       if (news.value.gallery && news.value.gallery.length > 0) {
         const mainImage = news.value.gallery.find(img => img.is_main) || news.value.gallery[0]
-        
+
         // Para redes sociales, usar imagen optimizada de 1200x630
         if (mainImage.social_url) {
-          return mainImage.social_url
+          return makeAbsoluteUrl(mainImage.social_url)
         } else if (mainImage.cloudinary_secure_url) {
           // Si está en Cloudinary, generar URL optimizada para redes sociales
-          return `${mainImage.cloudinary_secure_url.replace('/upload/', '/upload/w_1200,h_630,c_fill,f_auto,q_auto/')}`
+          const cloudinaryUrl = mainImage.cloudinary_secure_url.replace('/upload/', '/upload/w_1200,h_630,c_fill,f_auto,q_auto/')
+          return makeAbsoluteUrl(cloudinaryUrl)
         } else if (mainImage.large_url) {
-          return mainImage.large_url
+          return makeAbsoluteUrl(mainImage.large_url)
         } else if (mainImage.medium_url) {
-          return mainImage.medium_url
+          return makeAbsoluteUrl(mainImage.medium_url)
         } else if (mainImage.optimized_url) {
-          return mainImage.optimized_url
+          return makeAbsoluteUrl(mainImage.optimized_url)
         }
       }
-      
+
       // Fallback a imagen principal optimizada para redes sociales
       const fallbackImage = news.value.image_url || news.value.image
       if (fallbackImage && fallbackImage.includes('cloudinary.com')) {
         // Si es Cloudinary, optimizar para redes sociales
-        return fallbackImage.replace('/upload/', '/upload/w_1200,h_630,c_fill,f_auto,q_auto/')
+        return makeAbsoluteUrl(fallbackImage.replace('/upload/', '/upload/w_1200,h_630,c_fill,f_auto,q_auto/'))
       }
-      
-      return getOptimizedImageUrl(fallbackImage, 'social')
+
+      const optimizedUrl = getOptimizedImageUrl(fallbackImage, 'social')
+      return makeAbsoluteUrl(optimizedUrl)
     })
 
     const metaUrl = computed(() => {
