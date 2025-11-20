@@ -71,12 +71,12 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
-  timeout: 120000, // 120 segundos timeout (2 minutos) - aumentado para imágenes pesadas
-  validateStatus: (status) => status < 500 // No fallar en errores 4xx
+  timeout: 120000, // 120 segundos timeout (2 minutos) - aumentado para respuestas grandes
+  validateStatus: (status) => status < 500 // No fallar en errores 4xx, pero sí en 5xx
 })
 
 // Configuración de retry - REDUCIDO para evitar consumo excesivo
-const MAX_RETRIES = 1 // Reducido de 3 a 1
+const MAX_RETRIES = 0 // Deshabilitado temporalmente para debugging
 const RETRY_DELAY_BASE = 2000 // Aumentado a 2 segundos
 
 // Función para calcular delay con exponential backoff
@@ -102,9 +102,21 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    
+    // Log de la petición para debugging
+    console.log('📤 Petición API:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: `${config.baseURL}${config.url}`,
+      params: config.params,
+      hasToken: !!token
+    })
+    
     return config
   },
   (error) => {
+    console.error('❌ Error en interceptor de request:', error)
     return Promise.reject(error)
   }
 )
@@ -115,10 +127,22 @@ api.interceptors.response.use(
   async (error) => {
     const config = error.config
 
+    // Log del error para debugging
+    console.error('❌ Error en petición API:', {
+      url: config?.url,
+      method: config?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      message: error.message,
+      code: error.code,
+      responseData: error.response?.data
+    })
+
     // Si no hay configuración o ya se alcanzó el máximo de reintentos
     if (!config || config.__retryCount >= MAX_RETRIES) {
       // Manejar error 401 (token expirado)
       if (error.response?.status === 401) {
+        console.warn('⚠️ Token expirado, redirigiendo a login')
         localStorage.removeItem('auth_token')
         localStorage.removeItem('user')
         window.location.href = '/admin/login'
@@ -131,8 +155,10 @@ api.interceptors.response.use(
 
     // Verificar si el error es retryable
     if (!isRetryableError(error)) {
+      console.warn('⚠️ Error no es retryable, rechazando petición')
       // Manejar error 401 (token expirado)
       if (error.response?.status === 401) {
+        console.warn('⚠️ Token expirado, redirigiendo a login')
         localStorage.removeItem('auth_token')
         localStorage.removeItem('user')
         window.location.href = '/admin/login'

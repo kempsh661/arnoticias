@@ -113,6 +113,17 @@
           <div class="tab-header">
             <h2>Gestión de Noticias</h2>
             <div class="header-actions">
+              <button 
+                @click="regenerateStaticPages" 
+                :disabled="regeneratingPages"
+                class="regenerate-btn"
+                :class="{ loading: regeneratingPages }"
+                title="Regenerar páginas estáticas para WhatsApp y Facebook"
+              >
+                <span v-if="!regeneratingPages">🔄</span>
+                <span v-else class="spinner">⏳</span>
+                {{ regeneratingPages ? 'Regenerando...' : 'Regenerar Páginas Estáticas' }}
+              </button>
               <button @click="checkAutoDeleteCandidates" class="check-delete-btn">
                 <span>🗑️</span>
                 Ver Eliminaciones Automáticas
@@ -229,6 +240,19 @@
                 </div>
               </div>
             </div>
+          </div>
+          
+          <!-- Botón Cargar Más -->
+          <div v-if="hasMorePages && !loading" class="load-more-section" style="text-align: center; margin: 20px 0;">
+            <button 
+              @click="loadMoreNews" 
+              :disabled="isLoadingMore"
+              class="btn btn-primary"
+              style="padding: 10px 30px; font-size: 16px;"
+            >
+              <span v-if="isLoadingMore">⏳ Cargando...</span>
+              <span v-else>📰 Cargar Más Noticias</span>
+            </button>
           </div>
         </div>
 
@@ -460,6 +484,12 @@ export default {
     const fileInput = ref(null)
     const previewNewsData = ref(null)
     const currentImageIndex = ref(0)
+    const regeneratingPages = ref(false)
+    
+    // Paginación
+    const currentPage = ref(1)
+    const hasMorePages = ref(true)
+    const isLoadingMore = ref(false)
 
     const stats = reactive({
       totalNews: 0,
@@ -507,38 +537,125 @@ export default {
         
         // Verificar autenticación
         if (!authService.isAuthenticated()) {
-          console.warn('Usuario no autenticado')
+          console.warn('⚠️ Usuario no autenticado')
+          router.push('/admin/login')
           return
         }
         
+        console.log('🔄 Cargando datos del dashboard...')
+        
         // Cargar noticias desde el API (incluir todas las noticias para admin)
-        const newsResponse = await newsService.getAllForAdmin({ per_page: 100 })
-        console.log('Respuesta de noticias:', newsResponse)
-        news.value = newsResponse.data || []
+        try {
+          console.log('🔄 Iniciando carga de noticias para admin...')
+          const page = 1 // Siempre empezar desde la página 1
+          currentPage.value = page
+          const newsResponse = await newsService.getAllForAdmin({ per_page: 10, page: page })
+          console.log('📰 Respuesta completa de noticias:', newsResponse)
+          console.log('📊 Tipo de respuesta:', typeof newsResponse)
+          console.log('📊 Tiene success?', newsResponse?.success)
+          console.log('📊 Tiene data?', !!newsResponse?.data)
+          console.log('📊 Tiene meta?', !!newsResponse?.meta)
+          
+          // Manejar diferentes estructuras de respuesta
+          if (newsResponse && newsResponse.success && Array.isArray(newsResponse.data)) {
+            // Estructura: { success: true, data: [...], meta: {...} }
+            news.value = newsResponse.data
+            console.log(`✅ ${news.value.length} noticias cargadas correctamente`)
+            
+            // Actualizar paginación
+            if (newsResponse.meta) {
+              hasMorePages.value = newsResponse.meta.current_page < newsResponse.meta.last_page
+              stats.totalNews = newsResponse.meta.total || news.value.length
+            } else {
+              stats.totalNews = news.value.length
+            }
+          } else if (Array.isArray(newsResponse)) {
+            // Si la respuesta es directamente un array
+            news.value = newsResponse
+            console.log(`✅ ${news.value.length} noticias cargadas (array directo)`)
+            stats.totalNews = news.value.length
+            hasMorePages.value = false
+          } else if (newsResponse && newsResponse.data && Array.isArray(newsResponse.data)) {
+            // Si tiene data pero no success
+            news.value = newsResponse.data
+            console.log(`✅ ${news.value.length} noticias cargadas (con data)`)
+            stats.totalNews = news.value.length
+            hasMorePages.value = false
+          } else {
+            console.error('❌ Estructura de respuesta inesperada:', newsResponse)
+            console.error('❌ Tipo:', typeof newsResponse)
+            console.error('❌ Keys:', newsResponse ? Object.keys(newsResponse) : 'null')
+            console.error('❌ Valor completo:', JSON.stringify(newsResponse, null, 2))
+            news.value = []
+            stats.totalNews = 0
+            alert('⚠️ No se pudieron cargar las noticias. La respuesta del servidor tiene un formato inesperado.')
+          }
+        } catch (newsError) {
+          console.error('❌ Error cargando noticias:', newsError)
+          console.error('❌ Error response:', newsError.response)
+          console.error('❌ Error response data:', newsError.response?.data)
+          console.error('❌ Error status:', newsError.response?.status)
+          console.error('❌ Error message:', newsError.message)
+          news.value = []
+          stats.totalNews = 0
+          
+          // Mostrar error más específico al usuario
+          const errorMessage = newsError.response?.data?.message || newsError.message || 'Error desconocido'
+          const statusCode = newsError.response?.status
+          alert(`❌ Error al cargar las noticias (${statusCode || 'N/A'}): ${errorMessage}\n\nPor favor, verifica tu conexión y recarga la página.`)
+        }
 
         // Cargar categorías desde el API
-        const categoriesResponse = await newsService.getCategories()
-        console.log('Respuesta de categorías:', categoriesResponse)
-        categories.value = categoriesResponse.data || []
+        try {
+          const categoriesResponse = await newsService.getCategories()
+          console.log('📂 Respuesta de categorías:', categoriesResponse)
+          
+          // Manejar diferentes estructuras de respuesta
+          if (categoriesResponse && categoriesResponse.success && Array.isArray(categoriesResponse.data)) {
+            categories.value = categoriesResponse.data
+            console.log(`✅ ${categories.value.length} categorías cargadas`)
+          } else if (Array.isArray(categoriesResponse)) {
+            categories.value = categoriesResponse
+            console.log(`✅ ${categories.value.length} categorías cargadas (array directo)`)
+          } else if (categoriesResponse && categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
+            categories.value = categoriesResponse.data
+            console.log(`✅ ${categories.value.length} categorías cargadas (con data)`)
+          } else {
+            console.warn('⚠️ Estructura de respuesta de categorías inesperada:', categoriesResponse)
+            categories.value = []
+          }
+        } catch (categoriesError) {
+          console.error('❌ Error cargando categorías:', categoriesError)
+          categories.value = []
+        }
 
         // Calcular estadísticas
         stats.totalNews = news.value.length
         stats.featuredNews = news.value.filter(item => item.featured).length
         stats.categories = categories.value.length
         stats.publishedNews = news.value.filter(item => item.publication_status === 'published').length
+        
+        console.log('📊 Estadísticas calculadas:', stats)
 
         // Cargar medios (opcional, no mostrar error si falla)
         try {
           const mediaResponse = await mediaService.getAll()
           mediaFiles.value = mediaResponse.data || []
+          console.log(`✅ ${mediaFiles.value.length} archivos de medios cargados`)
         } catch (mediaError) {
-          console.warn('Error cargando medios:', mediaError)
+          console.warn('⚠️ Error cargando medios:', mediaError)
           mediaFiles.value = []
         }
 
       } catch (error) {
-        console.error('Error cargando datos del dashboard:', error)
-        // No mostrar alerta, solo loggear el error
+        console.error('❌ Error general cargando datos del dashboard:', error)
+        console.error('❌ Error response:', error.response)
+        console.error('❌ Error message:', error.message)
+        console.error('❌ Error stack:', error.stack)
+        
+        // Mostrar error al usuario
+        alert('Error al cargar los datos del dashboard. Por favor, recarga la página.')
+        
         // Inicializar con datos vacíos para evitar errores
         news.value = []
         categories.value = []
@@ -549,6 +666,7 @@ export default {
         stats.publishedNews = 0
       } finally {
         loading.value = false
+        console.log('✅ Carga de datos completada')
       }
     }
 
@@ -928,6 +1046,42 @@ export default {
       document.body.style.overflow = 'auto'
     }
 
+    const loadMoreNews = async () => {
+      if (isLoadingMore.value || !hasMorePages.value) return
+      
+      try {
+        isLoadingMore.value = true
+        const nextPage = currentPage.value + 1
+        console.log(`🔄 Cargando página ${nextPage}...`)
+        
+        const newsResponse = await newsService.getAllForAdmin({ 
+          per_page: 20, 
+          page: nextPage 
+        })
+        
+        if (newsResponse && newsResponse.success && Array.isArray(newsResponse.data)) {
+          // Agregar nuevas noticias a la lista existente
+          news.value = [...news.value, ...newsResponse.data]
+          
+          // Actualizar paginación
+          if (newsResponse.meta) {
+            hasMorePages.value = newsResponse.meta.current_page < newsResponse.meta.last_page
+            currentPage.value = newsResponse.meta.current_page
+            stats.totalNews = newsResponse.meta.total || news.value.length
+          } else {
+            hasMorePages.value = false
+          }
+          
+          console.log(`✅ Página ${nextPage} cargada. Total: ${news.value.length} noticias`)
+        }
+      } catch (error) {
+        console.error('❌ Error cargando más noticias:', error)
+        alert('Error al cargar más noticias')
+      } finally {
+        isLoadingMore.value = false
+      }
+    }
+
     // Función para extraer imágenes de una noticia (actualizada para nueva galería)
     const getNewsImages = (news) => {
       const images = []
@@ -1094,6 +1248,68 @@ export default {
       }
     }
 
+    const regenerateStaticPages = async () => {
+      if (!confirm('¿Estás seguro de que quieres regenerar todas las páginas estáticas? Esto puede tomar unos minutos.')) {
+        return
+      }
+
+      try {
+        regeneratingPages.value = true
+        console.log('🔄 Iniciando regeneración de páginas estáticas...')
+
+        // Obtener el token de autenticación del usuario
+        const userToken = localStorage.getItem('auth_token')
+        
+        if (!userToken) {
+          alert('❌ Debes estar autenticado para regenerar las páginas estáticas')
+          regeneratingPages.value = false
+          return
+        }
+
+        // Usar ruta relativa - Vite proxy redirigirá a localhost:8080 en desarrollo
+        // En producción, será la misma URL del frontend
+        const apiUrl = '/api/regenerate-static-pages'
+        
+        console.log('🔄 Regenerando páginas estáticas en:', apiUrl)
+        console.log('📍 URL completa:', window.location.origin + apiUrl)
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({ limit: 10 }) // Solo generar las últimas 10 noticias
+        })
+
+        // Verificar que la respuesta tenga contenido antes de parsear JSON
+        const responseText = await response.text()
+        let data
+        try {
+          data = responseText ? JSON.parse(responseText) : { success: false, message: 'Respuesta vacía del servidor' }
+        } catch (parseError) {
+          console.error('❌ Error parseando JSON:', parseError)
+          console.error('❌ Respuesta del servidor:', responseText)
+          throw new Error(`Error en la respuesta del servidor: ${responseText.substring(0, 200)}`)
+        }
+
+        if (response.ok && data.success) {
+          console.log('✅ Páginas estáticas regeneradas exitosamente')
+          console.log('📝 Output:', data.output)
+          const limit = data.limit || 10
+          alert(`✅ Páginas estáticas regeneradas exitosamente (últimas ${limit} noticias).\n\nLas vistas previas en WhatsApp y Facebook se actualizarán en los próximos minutos.`)
+        } else {
+          console.error('❌ Error en la respuesta:', data)
+          alert(`❌ Error al regenerar páginas estáticas: ${data.message || 'Error desconocido'}`)
+        }
+      } catch (error) {
+        console.error('❌ Error regenerando páginas estáticas:', error)
+        alert(`❌ Error al regenerar páginas estáticas: ${error.message || 'Error de conexión'}`)
+      } finally {
+        regeneratingPages.value = false
+      }
+    }
+
     onMounted(() => {
       currentUser.value = authService.getCurrentUser()
       if (!currentUser.value) {
@@ -1114,6 +1330,11 @@ export default {
       fileInput,
       previewNewsData,
       currentImageIndex,
+      regeneratingPages,
+      currentPage,
+      hasMorePages,
+      isLoadingMore,
+      loadMoreNews,
       stats,
       news,
       categories,
@@ -1150,7 +1371,8 @@ export default {
       handleImageError,
       handleImageLoad,
       getCleanContent,
-      formatDate
+      formatDate,
+      regenerateStaticPages
     }
   }
 }
@@ -1302,7 +1524,7 @@ export default {
   align-items: center;
 }
 
-.create-btn, .upload-btn, .check-delete-btn {
+.create-btn, .upload-btn, .check-delete-btn, .regenerate-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
@@ -1320,7 +1542,34 @@ export default {
   background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
 }
 
-.create-btn:hover, .upload-btn:hover, .check-delete-btn:hover {
+.regenerate-btn {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+}
+
+.regenerate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.regenerate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.regenerate-btn.loading {
+  position: relative;
+}
+
+.regenerate-btn .spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.create-btn:hover, .upload-btn:hover, .check-delete-btn:hover, .regenerate-btn:hover:not(:disabled) {
   transform: translateY(-2px);
 }
 

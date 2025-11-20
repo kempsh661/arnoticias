@@ -16,6 +16,14 @@ export default defineConfig({
     middlewareMode: false,
     fs: {
       allow: ['..']
+    },
+    // Proxy para redirigir peticiones API al servidor backend
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      }
     }
   },
   preview: {

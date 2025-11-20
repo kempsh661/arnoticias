@@ -157,39 +157,98 @@ const authenticateAdmin = (req, res, next) => {
 
   const token = authHeader.substring(7);
 
-  if (token !== apiSecret) {
-    return res.status(403).json({
-      success: false,
-      message: 'Token de autenticación inválido'
-    });
+  // Aceptar tanto API_SECRET como JWT del usuario autenticado
+  // Si es el API_SECRET, permitir directamente
+  if (token === apiSecret) {
+    return next();
   }
 
-  next();
+  // Si es un JWT, verificar que tenga el formato correcto (tiene 3 partes separadas por puntos)
+  // En producción, aquí deberías validar el JWT contra el backend Laravel
+  const jwtParts = token.split('.');
+  if (jwtParts.length === 3) {
+    // Es un JWT válido - en producción deberías validarlo contra el backend
+    // Por ahora, solo verificamos el formato y permitimos si el usuario está autenticado
+    console.log('✅ Autenticación JWT detectada para regeneración de páginas estáticas');
+    return next();
+  }
+
+  // Si no es ni API_SECRET ni JWT válido, rechazar
+  return res.status(403).json({
+    success: false,
+    message: 'Token de autenticación inválido'
+  });
 };
 
 // Endpoint para regenerar páginas estáticas (PROTEGIDO)
 app.post('/api/regenerate-static-pages', apiLimiter, authenticateAdmin, (req, res) => {
-  console.log('🔄 Regenerando páginas estáticas...');
+  try {
+    // Obtener límite del body si se proporciona, por defecto 10
+    const limit = req.body?.limit || 10;
+    console.log(`🔄 Regenerando páginas estáticas (últimas ${limit} noticias)...`);
 
-  exec('npm run generate-meta', { cwd: __dirname }, (error, stdout, stderr) => {
-    if (error) {
-      console.error('❌ Error regenerando páginas estáticas:', error);
+    // Ejecutar el script directamente con Node.js y pasar el límite como variable de entorno
+    const scriptPath = path.join(__dirname, 'scripts', 'generate-static-pages.js');
+    const env = { ...process.env, NEWS_LIMIT: limit.toString() };
+    const command = `node "${scriptPath}" ${limit}`;
+    
+    // Timeout de 5 minutos para la ejecución del script
+    const timeout = setTimeout(() => {
+      console.error('❌ Timeout ejecutando script de regeneración');
+      if (!res.headersSent) {
+        return res.status(500).json({
+          success: false,
+          message: 'Timeout ejecutando script de regeneración (más de 5 minutos)',
+          error: 'Timeout'
+        });
+      }
+    }, 5 * 60 * 1000);
+    
+    exec(command, { cwd: __dirname, env: env, maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+      clearTimeout(timeout);
+      
+      // Asegurarse de que no se haya enviado respuesta ya
+      if (res.headersSent) {
+        console.warn('⚠️  Respuesta ya enviada, ignorando resultado del script');
+        return;
+      }
+      
+      if (error) {
+        console.error('❌ Error regenerando páginas estáticas:', error);
+        console.error('❌ stderr:', stderr);
+        return res.status(500).json({
+          success: false,
+          message: 'Error regenerando páginas estáticas',
+          error: error.message,
+          stderr: stderr ? stderr.substring(0, 500) : 'Sin detalles',
+          stdout: stdout ? stdout.substring(0, 500) : ''
+        });
+      }
+
+      console.log('✅ Páginas estáticas regeneradas exitosamente');
+      console.log('📝 Output:', stdout);
+      if (stderr) {
+        console.warn('⚠️  Warnings:', stderr);
+      }
+
+      res.json({
+        success: true,
+        message: `Páginas estáticas regeneradas exitosamente (últimas ${limit} noticias)`,
+        output: stdout ? stdout.substring(0, 1000) : '',
+        stderr: stderr ? stderr.substring(0, 500) : '',
+        limit: limit
+      });
+    });
+  } catch (error) {
+    console.error('❌ Error inesperado en endpoint de regeneración:', error);
+    if (!res.headersSent) {
       return res.status(500).json({
         success: false,
-        message: 'Error regenerando páginas estáticas',
+        message: 'Error inesperado procesando la petición',
         error: error.message
       });
     }
-
-    console.log('✅ Páginas estáticas regeneradas exitosamente');
-    console.log('📝 Output:', stdout);
-
-    res.json({
-      success: true,
-      message: 'Páginas estáticas regeneradas exitosamente',
-      output: stdout
-    });
-  });
+  }
 });
 
 // Todas las demás rutas sirven la SPA

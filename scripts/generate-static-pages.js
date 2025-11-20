@@ -5,7 +5,7 @@ const path = require('path');
 const https = require('https');
 
 // Función para hacer peticiones HTTPS con timeout
-function makeRequest(url, timeout = 10000) {
+function makeRequest(url, timeout = 30000) {
   return new Promise((resolve, reject) => {
     const request = https.get(url, (res) => {
       let data = '';
@@ -16,12 +16,14 @@ function makeRequest(url, timeout = 10000) {
         try {
           resolve(JSON.parse(data));
         } catch (e) {
-          reject(e);
+          reject(new Error(`Error parseando JSON: ${e.message}`));
         }
       });
-    }).on('error', reject);
+    }).on('error', (err) => {
+      reject(new Error(`Error de conexión: ${err.message}`));
+    });
     
-    // Agregar timeout
+    // Agregar timeout (aumentado a 30 segundos)
     request.setTimeout(timeout, () => {
       request.destroy();
       reject(new Error('Request timeout'));
@@ -204,35 +206,38 @@ async function processInParallel(items, processor, concurrency = 10) {
 }
 
 // Función principal
-async function generateStaticPages() {
+async function generateStaticPages(limit = null) {
   try {
-    console.log('🔄 Obteniendo lista de noticias...');
+    // Si se especifica un límite, solo generar las últimas N noticias
+    const newsLimit = limit || null;
+    const limitMessage = newsLimit ? ` (últimas ${newsLimit} noticias)` : '';
     
-    // Obtener todas las noticias (manejar paginación)
-    // Aumentar límite por página para reducir número de peticiones
+    console.log(`🔄 Obteniendo lista de noticias${limitMessage}...`);
+    
+    // Obtener noticias (solo las necesarias si hay límite)
     let allNews = [];
     let currentPage = 1;
     let hasMorePages = true;
     const maxRetries = 2;
-    const itemsPerPage = 100; // Aumentado de 50 a 100 para menos peticiones
+    const itemsPerPage = newsLimit ? Math.min(newsLimit, 100) : 100; // Si hay límite, usar ese valor
     
-    while (hasMorePages) {
+    while (hasMorePages && (!newsLimit || allNews.length < newsLimit)) {
       console.log(`📄 Obteniendo página ${currentPage}...`);
       
       let response = null;
       let lastError = null;
       
-      // Intentar con reintentos (reducir timeout y tiempo de espera)
+      // Intentar con reintentos (timeout aumentado a 30 segundos)
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          response = await makeRequest(`https://barnoticias-production.up.railway.app/api/v1/news?page=${currentPage}&limit=${itemsPerPage}`, 8000);
+          response = await makeRequest(`https://barnoticias-production.up.railway.app/api/v1/news?page=${currentPage}&per_page=${itemsPerPage}`, 30000);
           break; // Éxito, salir del loop de reintentos
         } catch (error) {
           lastError = error;
           console.warn(`⚠️  Intento ${attempt}/${maxRetries} falló: ${error.message}`);
           if (attempt < maxRetries) {
-            // Reducir tiempo de espera
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Esperar 2 segundos entre reintentos
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
         }
       }
@@ -266,10 +271,19 @@ async function generateStaticPages() {
         break;
       }
       
-      allNews = allNews.concat(response.data);
+      const pageNews = response.data;
+      
+      // Si hay límite, tomar solo las necesarias
+      if (newsLimit && allNews.length + pageNews.length > newsLimit) {
+        const remaining = newsLimit - allNews.length;
+        allNews = allNews.concat(pageNews.slice(0, remaining));
+        break; // Ya tenemos las que necesitamos
+      } else {
+        allNews = allNews.concat(pageNews);
+      }
       
       // Verificar si hay más páginas
-      hasMorePages = response.meta && response.meta.has_more_pages;
+      hasMorePages = response.meta && response.meta.has_more_pages && (!newsLimit || allNews.length < newsLimit);
       currentPage++;
       
       // Límite de seguridad para evitar bucles infinitos
@@ -281,10 +295,12 @@ async function generateStaticPages() {
     
     if (allNews.length === 0) {
       console.warn('⚠️  No se encontraron noticias para generar páginas estáticas');
+      console.log('ℹ️  Esto puede deberse a problemas de conexión con la API');
+      // No salir con error, solo advertir
       return;
     }
     
-    console.log(`📰 Encontradas ${allNews.length} noticias en total`);
+    console.log(`📰 Procesando ${allNews.length} noticias${limitMessage}`);
     
     // Crear directorio para páginas estáticas
     const staticDir = path.join(__dirname, '..', 'public', 'noticia');
@@ -292,25 +308,50 @@ async function generateStaticPages() {
       fs.mkdirSync(staticDir, { recursive: true });
     }
     
+    // También crear en dist si existe
+    const distDir = path.join(__dirname, '..', 'dist', 'noticia');
+    if (!fs.existsSync(distDir)) {
+      fs.mkdirSync(distDir, { recursive: true });
+    }
+    
     // Generar páginas estáticas en paralelo (procesamiento por lotes)
     console.log(`⚡ Generando ${allNews.length} páginas estáticas en paralelo...`);
     const startTime = Date.now();
     
+    let generatedCount = 0;
     await processInParallel(allNews, async (news) => {
-      const staticPage = generateStaticPage(news);
-      const pageFile = path.join(staticDir, `${news.id}.html`);
-      await writeFileAsync(pageFile, staticPage);
-      return news.id;
+      try {
+        const staticPage = generateStaticPage(news);
+        const pageFile = path.join(staticDir, `${news.id}.html`);
+        await writeFileAsync(pageFile, staticPage);
+        
+        // También copiar a dist si existe
+        if (fs.existsSync(distDir)) {
+          const distPageFile = path.join(distDir, `${news.id}.html`);
+          await writeFileAsync(distPageFile, staticPage);
+        }
+        
+        generatedCount++;
+        return news.id;
+      } catch (err) {
+        console.error(`❌ Error generando página para noticia ${news.id}:`, err.message);
+        return null;
+      }
     }, 20); // Procesar 20 archivos en paralelo
     
     const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`✅ Páginas estáticas generadas exitosamente en ${elapsedTime}s`);
+    console.log(`✅ ${generatedCount} páginas estáticas generadas exitosamente en ${elapsedTime}s`);
     console.log(`📁 Archivos guardados en: ${staticDir}`);
+    
+    if (generatedCount === 0) {
+      console.warn('⚠️  No se generó ninguna página estática');
+    }
     
   } catch (error) {
     console.error('❌ Error inesperado generando páginas estáticas:', error.message);
     console.error('⚠️  Continuando sin generar páginas estáticas...');
     // No llamar a process.exit(1) para permitir que el build continúe
+    throw error; // Lanzar el error para que el endpoint lo capture
   }
 }
 
