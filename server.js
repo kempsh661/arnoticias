@@ -251,6 +251,68 @@ app.post('/api/regenerate-static-pages', apiLimiter, authenticateAdmin, (req, re
   }
 });
 
+// Endpoint para gestionar noticias destacadas automáticamente (PROTEGIDO)
+app.post('/api/manage-featured', apiLimiter, authenticateAdmin, (req, res) => {
+  try {
+    console.log('⭐ Gestionando noticias destacadas...');
+
+    const scriptPath = path.join(__dirname, 'scripts', 'manage-featured-news.js');
+    const command = `node "${scriptPath}"`;
+
+    // Timeout de 2 minutos
+    const timeout = setTimeout(() => {
+      console.error('❌ Timeout ejecutando script de gestión de destacadas');
+      if (!res.headersSent) {
+        return res.status(500).json({
+          success: false,
+          message: 'Timeout ejecutando script (más de 2 minutos)',
+          error: 'Timeout'
+        });
+      }
+    }, 2 * 60 * 1000);
+
+    exec(command, { cwd: __dirname, env: process.env, maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+      clearTimeout(timeout);
+
+      if (res.headersSent) {
+        console.warn('⚠️  Respuesta ya enviada, ignorando resultado del script');
+        return;
+      }
+
+      if (error) {
+        console.error('❌ Error gestionando destacadas:', error);
+        console.error('❌ stderr:', stderr);
+        return res.status(500).json({
+          success: false,
+          message: 'Error gestionando noticias destacadas',
+          error: error.message,
+          stderr: stderr ? stderr.substring(0, 500) : 'Sin detalles',
+          stdout: stdout ? stdout.substring(0, 500) : ''
+        });
+      }
+
+      console.log('✅ Noticias destacadas gestionadas exitosamente');
+      console.log('📝 Output:', stdout);
+
+      res.json({
+        success: true,
+        message: 'Noticias destacadas gestionadas exitosamente',
+        output: stdout ? stdout.substring(0, 1000) : '',
+        stderr: stderr ? stderr.substring(0, 500) : ''
+      });
+    });
+  } catch (error) {
+    console.error('❌ Error inesperado en endpoint de gestión de destacadas:', error);
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error inesperado procesando la petición',
+        error: error.message
+      });
+    }
+  }
+});
+
 // Todas las demás rutas sirven la SPA
 app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));

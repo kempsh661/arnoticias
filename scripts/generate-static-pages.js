@@ -22,14 +22,12 @@ function generateStaticPage(news) {
 
   // Obtener imagen principal optimizada para redes sociales (1200x630)
   let image = 'https://araucanoticias.com.co/logo-aruca.png';
-  let imageNeedsProcessing = true;
 
   if (news.gallery && news.gallery.length > 0) {
     const mainImage = news.gallery.find(img => img.is_main) || news.gallery[0];
-    // Priorizar social_url para redes sociales (1200x630) - ya viene optimizada
+    // Priorizar social_url para redes sociales (1200x630)
     if (mainImage.social_url) {
       image = mainImage.social_url;
-      imageNeedsProcessing = false;
     } else if (mainImage.cloudinary_secure_url) {
       image = mainImage.cloudinary_secure_url;
     } else if (mainImage.large_url) {
@@ -43,8 +41,9 @@ function generateStaticPage(news) {
     image = news.image_url || news.image;
   }
 
-  // Optimizar imagen para WhatsApp y Facebook (1200x630)
-  if (imageNeedsProcessing && image.includes('cloudinary.com')) {
+  // IMPORTANTE: WhatsApp NO soporta WebP en Open Graph
+  // Optimizar imagen para WhatsApp y Facebook (1200x630 en JPEG)
+  if (image.includes('cloudinary.com')) {
     const uploadIndex = image.indexOf('/image/upload/');
     if (uploadIndex !== -1) {
       const afterUpload = image.substring(uploadIndex + '/image/upload/'.length);
@@ -52,7 +51,9 @@ function generateStaticPage(news) {
       if (parts.length > 1) {
         const publicId = parts.slice(1).join('/');
         const baseUrl = image.substring(0, uploadIndex + '/image/upload/'.length);
-        image = `${baseUrl}w_1200,h_630,c_fill,f_auto,q_auto/${publicId}`;
+        // Usar f_jpg en lugar de f_webp para compatibilidad con WhatsApp
+        // q_80 para balance entre calidad y tamaño
+        image = `${baseUrl}w_1200,h_630,c_fill,f_jpg,q_80/${publicId}`;
       }
     }
   }

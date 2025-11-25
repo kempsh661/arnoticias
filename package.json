@@ -11,7 +11,8 @@
     "start": "node server.js",
     "generate-meta": "node scripts/generate-static-pages.js",
     "generate-latest-2": "node scripts/regenerate-latest-2.js",
-    "auto-regenerate": "node scripts/auto-regenerate.js"
+    "auto-regenerate": "node scripts/auto-regenerate.js",
+    "manage-featured": "node scripts/manage-featured-news.js"
   },
   "dependencies": {
     "@vueuse/core": "^10.11.1",
