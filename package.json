@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "dev:full": "node vite-dev-server.js",
-    "build": "npm run generate-meta && vite build",
+    "build": "npm run generate-meta || true && vite build",
     "preview": "vite preview",
     "serve": "vite preview",
     "start": "node server.js",
