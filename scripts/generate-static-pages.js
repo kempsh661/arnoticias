@@ -5,9 +5,16 @@ const path = require('path');
 const https = require('https');
 
 // Función para hacer peticiones HTTPS con timeout
-function makeRequest(url, timeout = 30000) {
+function makeRequest(url, timeout = 60000) {
   return new Promise((resolve, reject) => {
-    const request = https.get(url, (res) => {
+    // Deshabilitar HTTP/2 para evitar problemas de conexión
+    const options = new URL(url);
+    options.agent = new https.Agent({
+      keepAlive: true,
+      maxSockets: 5
+    });
+
+    const request = https.get(url, { agent: options.agent }, (res) => {
       let data = '';
       res.on('data', (chunk) => {
         data += chunk;
@@ -22,8 +29,8 @@ function makeRequest(url, timeout = 30000) {
     }).on('error', (err) => {
       reject(new Error(`Error de conexión: ${err.message}`));
     });
-    
-    // Agregar timeout (aumentado a 30 segundos)
+
+    // Agregar timeout (aumentado a 60 segundos)
     request.setTimeout(timeout, () => {
       request.destroy();
       reject(new Error('Request timeout'));

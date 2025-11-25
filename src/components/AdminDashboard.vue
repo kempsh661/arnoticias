@@ -1259,7 +1259,7 @@ export default {
 
         // Obtener el token de autenticación del usuario
         const userToken = localStorage.getItem('auth_token')
-        
+
         if (!userToken) {
           alert('❌ Debes estar autenticado para regenerar las páginas estáticas')
           regeneratingPages.value = false
@@ -1269,10 +1269,10 @@ export default {
         // Usar ruta relativa - Vite proxy redirigirá a localhost:8080 en desarrollo
         // En producción, será la misma URL del frontend
         const apiUrl = '/api/regenerate-static-pages'
-        
+
         console.log('🔄 Regenerando páginas estáticas en:', apiUrl)
         console.log('📍 URL completa:', window.location.origin + apiUrl)
-        
+
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
@@ -1293,11 +1293,21 @@ export default {
           throw new Error(`Error en la respuesta del servidor: ${responseText.substring(0, 200)}`)
         }
 
+        // Verificar si el token ha expirado (error 401 o 403)
+        if (response.status === 401 || response.status === 403) {
+          console.error('❌ Token expirado o inválido')
+          if (confirm('❌ Tu sesión ha expirado. ¿Quieres cerrar sesión e iniciar sesión nuevamente?')) {
+            await authService.logout()
+            router.push('/admin/login')
+          }
+          return
+        }
+
         if (response.ok && data.success) {
           console.log('✅ Páginas estáticas regeneradas exitosamente')
           console.log('📝 Output:', data.output)
           const limit = data.limit || 10
-          alert(`✅ Páginas estáticas regeneradas exitosamente (últimas ${limit} noticias).\n\nLas vistas previas en WhatsApp y Facebook se actualizarán en los próximos minutos.`)
+          alert(`✅ Páginas estáticas regeneradas exitosamente (últimas ${limit} noticias).\n\nLas vistas previas en WhatsApp y Facebook se actualizarán en los próximos minutos.\n\n💡 Consejo: Usa el Facebook Sharing Debugger para forzar la actualización:\nhttps://developers.facebook.com/tools/debug/`)
         } else {
           console.error('❌ Error en la respuesta:', data)
           alert(`❌ Error al regenerar páginas estáticas: ${data.message || 'Error desconocido'}`)
