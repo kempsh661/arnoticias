@@ -22,12 +22,14 @@ function generateStaticPage(news) {
 
   // Obtener imagen principal optimizada para redes sociales (1200x630)
   let image = 'https://araucanoticias.com.co/logo-aruca.png';
+  let imageNeedsProcessing = true;
 
   if (news.gallery && news.gallery.length > 0) {
     const mainImage = news.gallery.find(img => img.is_main) || news.gallery[0];
-    // Priorizar social_url para redes sociales (1200x630)
+    // Priorizar social_url para redes sociales (1200x630) - ya viene optimizada
     if (mainImage.social_url) {
       image = mainImage.social_url;
+      imageNeedsProcessing = false; // Ya viene optimizada para redes sociales
     } else if (mainImage.cloudinary_secure_url) {
       image = mainImage.cloudinary_secure_url;
     } else if (mainImage.large_url) {
@@ -42,18 +44,28 @@ function generateStaticPage(news) {
   }
 
   // IMPORTANTE: WhatsApp NO soporta WebP en Open Graph
-  // Optimizar imagen para WhatsApp y Facebook (1200x630 en JPEG)
+  // Asegurar que todas las imágenes de Cloudinary usen JPEG para compatibilidad con WhatsApp
   if (image.includes('cloudinary.com')) {
-    const uploadIndex = image.indexOf('/image/upload/');
-    if (uploadIndex !== -1) {
-      const afterUpload = image.substring(uploadIndex + '/image/upload/'.length);
-      const parts = afterUpload.split('/');
-      if (parts.length > 1) {
-        const publicId = parts.slice(1).join('/');
-        const baseUrl = image.substring(0, uploadIndex + '/image/upload/'.length);
-        // Usar f_jpg en lugar de f_webp para compatibilidad con WhatsApp
-        // q_80 para balance entre calidad y tamaño
-        image = `${baseUrl}w_1200,h_630,c_fill,f_jpg,q_80/${publicId}`;
+    // Si la imagen tiene f_webp o f_auto, reemplazarla por f_jpg
+    if (image.includes('f_webp') || image.includes('f_auto')) {
+      image = image.replace(/f_(webp|auto)/g, 'f_jpg');
+    }
+    
+    // Si la imagen necesita procesamiento (no es social_url), optimizarla
+    if (imageNeedsProcessing) {
+      const uploadIndex = image.indexOf('/image/upload/');
+      if (uploadIndex !== -1) {
+        const afterUpload = image.substring(uploadIndex + '/image/upload/'.length);
+        const parts = afterUpload.split('/');
+        
+        // Extraer publicId (última parte)
+        const publicId = parts.length > 0 ? parts[parts.length - 1] : null;
+        
+        if (publicId) {
+          const baseUrl = image.substring(0, uploadIndex + '/image/upload/'.length);
+          // Reconstruir URL con dimensiones y formato correctos para redes sociales
+          image = `${baseUrl}w_1200,h_630,c_fill,f_jpg,q_90/${publicId}`;
+        }
       }
     }
   }
