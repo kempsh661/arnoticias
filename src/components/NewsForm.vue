@@ -857,12 +857,27 @@ export default {
         // Regenerar páginas estáticas para SEO y redes sociales
         try {
           console.log('🔄 Regenerando páginas estáticas...')
-          await fetch('/api/regenerate-static-pages', {
+          const authToken = localStorage.getItem('auth_token')
+          const headers = {
+            'Content-Type': 'application/json'
+          }
+          
+          // Agregar token de autenticación si está disponible
+          if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`
+          }
+          
+          const response = await fetch('/api/regenerate-static-pages', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            }
+            headers: headers,
+            body: JSON.stringify({ limit: 2 }) // Regenerar las últimas 2 noticias (incluye la nueva)
           })
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+          }
+          
           console.log('✅ Páginas estáticas regeneradas exitosamente')
         } catch (regenerateError) {
           console.error('⚠️ Error regenerando páginas estáticas:', regenerateError)
